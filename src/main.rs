@@ -1,7 +1,9 @@
 mod instruction;
-mod register;
 mod processor;
+mod register;
+mod stack;
+mod program;
 
 fn main() {
-    println!("Hello, world!");
+    let mut _processor = processor::Processor::<u16, u16, 1024>::new();
 }

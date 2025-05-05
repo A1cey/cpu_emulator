@@ -1,80 +1,37 @@
-use crate::register::{Register8Bit, Register16Bit};
+use std::error::Error;
+use std::fmt::{self, Display};
+
 use crate::instruction::Instruction;
+use crate::program::Program;
+use crate::register::{RegisterSize, Registers};
+use crate::stack::{Stack, Word};
 
-/// Z80 processor
-struct Z80 {
-    registers: Z80Registers,
-    instructions: Vec<Instruction>,
+/// Processor struct
+#[derive(Debug)]
+pub struct Processor<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> {
+    registers: Registers<R, W>,
+    stack: Stack<W, STACK_SIZE>,
+    program: &'a Program,
 }
 
-impl Z80 {
-    fn new(registers: Z80Registers, instructions: Vec<Instruction>) -> Self {
-        Z80 { registers, instructions }
-    }
-
-    fn execute_instruction(&mut self)-> Result<(),String> {
-        let instruction = self.get_next_instruction()?;
-        
-        match *instruction {
-            Instruction::ADD => self.add(),
-            Instruction::NOP
+impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, STACK_SIZE> {
+    /// Create a new processor instance
+    pub fn new() -> Self {
+        Self {
+            registers: Registers::new(),
+            stack: Stack::new(),
+            program: &[],
         }
-        Ok(())
+    }
+
+    /// Load a program into the processor
+    pub fn load_program(&mut self, program: &'a [Instruction]) {
+        self.program = program;
     }
     
-    fn get_next_instruction(&mut self) -> Result<&Instruction, String> {
-        let pc = &mut self.registers.PC;
-        let instruction = self.instructions.get(*pc as usize).ok_or("Program counter out of bounds")?;
-        *pc += 1;
-        Ok(instruction)
+    /// Execute the next instruction in the program
+    pub fn execute_instruction(&mut self)-> Result<(), String> {
     }
+
 }
 
-/// Z80 processor registers
-/// https://www.zilog.com/docs/z80/um0080.pdf
-#[allow(non_snake_case)]
-struct Z80Registers {
-    /// Accumulator registers
-    A: Register8Bit,
-    A1: Register8Bit,
-    
-    /// Flag registers, F corresponds to A and F1 corresponds to A1 accumulator
-    F: Register8Bit,
-    F1: Register8Bit,
-    
-    /// General purpose register pairs
-    /// A registers pair can be used individually as two individual 8 bit registers or as a single 16 bit register
-    B: Register8Bit,
-    C: Register8Bit,
-    
-    D: Register8Bit,
-    E: Register8Bit, 
-    
-    H: Register8Bit,
-    L: Register8Bit,
-    
-    B1: Register8Bit,
-    C1: Register8Bit,
-    
-    D1: Register8Bit,
-    E1: Register8Bit,
-    
-    H1: Register8Bit,
-    L1: Register8Bit,
-    
-    /// Interrupt vector register
-    I: Register8Bit,
-    
-    /// Memory refresh register
-    R: Register8Bit,
-    
-    /// Index registers
-    IX: Register16Bit,
-    IY: Register16Bit,
-    
-    /// Stack pointer
-    SP: Register16Bit,
-    
-    /// Program counter
-    PC: Register16Bit,
-}

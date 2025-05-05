@@ -1,10 +1,7 @@
-use crate::register::Register8Bit;
+// TODO: Instruction set trait to implement different instruction sets
 
-/// simplified Z80 instruction set 
-/// https://www.zilog.com/docs/z80/um0080.pdf
-pub enum Z80InstructionSet {
-    Load(Register8Bit, u8),
-    ADD,
-    SUB,
-    JUMP,
+/// Instruction set for the processor
+#[derive(Debug, PartialEq, Eq)]
+pub enum Instruction {
+    Nop
 }
