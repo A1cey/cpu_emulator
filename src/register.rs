@@ -1,9 +1,9 @@
-use std::ops::AddAssign;
+use thiserror::Error;
 
 use crate::stack::Word;
 
 /// Marker trait for register sizes.
-pub trait RegisterSize: Copy + Default + Sized + AddAssign {}
+pub trait RegisterSize: Copy + Default + Sized {}
 
 impl RegisterSize for u8 {}
 impl RegisterSize for u16 {}
@@ -12,53 +12,96 @@ impl RegisterSize for u64 {}
 impl RegisterSize for u128 {}
 impl RegisterSize for usize {}
 
-/// Registers
-// TODO: User defined register count and sizes 
+/// Macro to create the registers struct and a corresponding enum for the register names.
+// TODO: User defined register count and sizes
 // TODO: Consider changing registers to use a array for the registers and a enum for the names
-#[derive(Debug, PartialEq, Eq)]
-pub struct Registers<R: RegisterSize, W: Word> {
-    pub r0: R,
-    pub r1: R,
-    pub r2: R,
-    pub r3: R,
-    pub r4: R,
-    pub r5: R,
-    pub r6: R,
-    pub r7: R,
-    pub r8: R,
-    pub r9: R,
-    pub r10: R,
-    pub r11: R,
-    pub r12: R,
-    pub r13: R,
-    pub r14: R,
-    pub r15: R,
-    pub pc: W,
-    pub sp: W,
+macro_rules! def_registers {
+    ($($register: ident),* $(,)?) => {
+        /// Get count of registers
+        #[allow(dead_code)]
+        enum Idents { $($register,)* __Count__ }
+        pub const COUNT: usize = Idents::__Count__ as usize;
+
+        /// Registers struct
+        #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
+        pub struct Registers<R: RegisterSize, W: Word> {
+            pub general: [R; COUNT],
+            pub pc: W,
+            pub sp: W,
+        }
+
+        impl<R: RegisterSize, W: Word> Registers<R, W> {
+            /// Create a new set of registers with all values initialized to the default value.
+            pub fn new() -> Self {
+                Registers {
+                    general: [R::default(); COUNT],
+                    pc: W::default(),
+                    sp: W::default(),
+                }
+            }
+
+            /// Get a register's value. The stack pointer and the program counter are not accessible directly.
+            pub fn get(&self, register: Register) -> RegisterValue<R, W> {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => RegisterValue::Other(self.general[Register::$register as usize]),
+                    )*
+                    Register::PC => RegisterValue::Word(self.pc),
+                    Register::SP => RegisterValue::Word(self.sp),
+                }
+            }
+
+            /// Set a register's value. The stack pointer and the program counter are not accessible directly.
+            pub fn set(&mut self, register: Register, value: RegisterValue<R, W>) -> Result<(), RegisterError> {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => match value {
+                            RegisterValue::Word(_) => Err(RegisterError::InvalidGeneralRegisterValue),
+                            RegisterValue::Other(other) => Ok(self.general[Register::$register as usize] = other),
+                        },
+                    )*
+                    Register::PC => match value {
+                        RegisterValue::Word(word) => Ok(self.pc = word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidProgramCounterValue),
+                    },
+                    Register::SP => match value {
+                        RegisterValue::Word(word) => Ok(self.sp = word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidStackPointerValue),
+                    }
+                }
+            }
+        }
+
+        #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+        pub enum RegisterValue<R, W> {
+            Word(W),
+            Other(R),
+        }
+
+        /// Enum of all register names
+        #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
+        pub enum Register {
+            $(
+                $register,
+            )*
+            PC,
+            SP
+        }
+    };
 }
 
-impl<R: RegisterSize, W: Word> Registers<R, W> {
-    /// Create a new set of registers with all values initialized to the default value.
-    pub fn new() -> Self {
-        Registers {
-            r0: R::default(),
-            r1: R::default(),
-            r2: R::default(),
-            r3: R::default(),
-            r4: R::default(),
-            r5: R::default(),
-            r6: R::default(),
-            r7: R::default(),
-            r8: R::default(),
-            r9: R::default(),
-            r10: R::default(),
-            r11: R::default(),
-            r12: R::default(),
-            r13: R::default(),
-            r14: R::default(),
-            r15: R::default(),
-            pc: W::default(),
-            sp: W::default(),
-        }
-    }
+def_registers!(
+    R0, R1, R2, R3, R4, R5, R6, R7, R8, R9, R10, R11, R12, R13, R14, R15
+);
+
+#[derive(Error, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
+pub enum RegisterError {
+    #[error("Invalid general register value")]
+    InvalidGeneralRegisterValue,
+    #[error("Invalid program counter value")]
+    InvalidProgramCounterValue,
+    #[error("Invalid stack pointer value")]
+    InvalidStackPointerValue,
 }

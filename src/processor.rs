@@ -1,17 +1,14 @@
-use std::error::Error;
-use std::fmt::{self, Display};
-
 use crate::instruction::Instruction;
-use crate::program::Program;
+use crate::program::{Program, ProgramError};
 use crate::register::{RegisterSize, Registers};
 use crate::stack::{Stack, Word};
 
 /// Processor struct
 #[derive(Debug)]
 pub struct Processor<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> {
-    registers: Registers<R, W>,
-    stack: Stack<W, STACK_SIZE>,
-    program: &'a Program,
+    pub registers: Registers<R, W>,
+    pub stack: Stack<W, STACK_SIZE>,
+    program: Option<&'a Program>,
 }
 
 impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, STACK_SIZE> {
@@ -20,18 +17,23 @@ impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, 
         Self {
             registers: Registers::new(),
             stack: Stack::new(),
-            program: &[],
+            program: None,
         }
     }
 
     /// Load a program into the processor
-    pub fn load_program(&mut self, program: &'a [Instruction]) {
-        self.program = program;
+    pub fn load_program(&mut self, program: &'a Program) {
+        self.program = Some(program);
     }
-    
+
     /// Execute the next instruction in the program
-    pub fn execute_instruction(&mut self)-> Result<(), String> {
+    pub fn execute_next_instruction(&mut self) -> Result<(), ProgramError> {
+        let program = self.program.ok_or(ProgramError::NoProgramLoaded)?;
+
+        let instruction = program.get_instruction(self.registers.pc.into())?;
+
+        Instruction::execute(instruction, self);
+
+        Ok(())
     }
-
 }
-
