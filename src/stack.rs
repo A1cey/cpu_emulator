@@ -1,9 +1,11 @@
-use core::ops::{Deref, DerefMut};
-use std::ops::AddAssign;
+use core::ops::{AddAssign, Deref, DerefMut, DivAssign, MulAssign, SubAssign};
 use thiserror::Error;
 
 /// Marker trait for types that can be used as words in a stack.
-pub trait Word: Copy + Default + Sized + Into<usize> + AddAssign {}
+pub trait Word:
+    Copy + Default + Sized + Into<usize> + AddAssign + SubAssign + MulAssign + DivAssign + From<i32>
+{
+}
 
 macro_rules! impl_word {
     ($name: ident, $type: ty $(,)? ) => {
@@ -25,9 +27,33 @@ macro_rules! impl_word {
             }
         }
 
+        impl ::core::convert::From<i32> for $name {
+            fn from(value: i32) -> Self {
+                Self(value as $type)
+            }
+        }
+
         impl ::core::ops::AddAssign for $name {
             fn add_assign(&mut self, other: Self) {
                 *self = Self(self.0 + other.0);
+            }
+        }
+
+        impl ::core::ops::SubAssign for $name {
+            fn sub_assign(&mut self, other: Self) {
+                *self = Self(self.0 - other.0);
+            }
+        }
+
+        impl ::core::ops::MulAssign for $name {
+            fn mul_assign(&mut self, other: Self) {
+                *self = Self(self.0 * other.0);
+            }
+        }
+
+        impl ::core::ops::DivAssign for $name {
+            fn div_assign(&mut self, other: Self) {
+                *self = Self(self.0 / other.0);
             }
         }
     };

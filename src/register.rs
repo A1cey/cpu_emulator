@@ -1,11 +1,14 @@
-use std::ops::AddAssign;
+use core::ops::{AddAssign, DivAssign, MulAssign, SubAssign};
 
 use thiserror::Error;
 
 use crate::stack::Word;
 
 /// Marker trait for register sizes.
-pub trait RegisterSize: Copy + Default + Sized + AddAssign {}
+pub trait RegisterSize:
+    Copy + Default + Sized + AddAssign + SubAssign + MulAssign + DivAssign + From<u8>
+{
+}
 
 impl RegisterSize for u8 {}
 impl RegisterSize for u16 {}
@@ -54,6 +57,27 @@ macro_rules! def_registers {
                 }
             }
 
+            /// Set a register's value. The stack pointer and the program counter are not accessible directly.
+            pub fn set(&mut self, register: Register, value: RegisterValue<R, W>) -> Result<(), RegisterError> {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => match value {
+                            RegisterValue::Word(_) => Err(RegisterError::InvalidGeneralRegisterValue),
+                            RegisterValue::Other(other) => Ok(self.general[Register::$register as usize] = other),
+                        },
+                    )*
+                    Register::PC => match value {
+                        RegisterValue::Word(word) => Ok(self.pc = word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidProgramCounterValue),
+                    },
+                    Register::SP => match value {
+                        RegisterValue::Word(word) => Ok(self.sp = word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidStackPointerValue),
+                    }
+                }
+            }
+
             pub fn add(&mut self,register: Register, value: RegisterValue<R,W>)-> Result<(), RegisterError> {
                 match register {
                     $(
@@ -74,24 +98,85 @@ macro_rules! def_registers {
                 }
             }
 
-            /// Set a register's value. The stack pointer and the program counter are not accessible directly.
-            pub fn set(&mut self, register: Register, value: RegisterValue<R, W>) -> Result<(), RegisterError> {
+            pub fn sub(&mut self,register: Register, value: RegisterValue<R,W>)-> Result<(), RegisterError> {
                 match register {
                     $(
                         // This should never panic as the general register array's length is calculated by the amount of general registers
                         Register::$register => match value {
                             RegisterValue::Word(_) => Err(RegisterError::InvalidGeneralRegisterValue),
-                            RegisterValue::Other(other) => Ok(self.general[Register::$register as usize] = other),
+                            RegisterValue::Other(other) => Ok(self.general[Register::$register as usize] -= other),
                         },
                     )*
                     Register::PC => match value {
-                        RegisterValue::Word(word) => Ok(self.pc = word),
+                        RegisterValue::Word(word) => Ok(self.pc -= word),
                         RegisterValue::Other(_) => Err(RegisterError::InvalidProgramCounterValue),
                     },
                     Register::SP => match value {
-                        RegisterValue::Word(word) => Ok(self.sp = word),
+                        RegisterValue::Word(word) => Ok(self.sp -= word),
                         RegisterValue::Other(_) => Err(RegisterError::InvalidStackPointerValue),
                     }
+                }
+            }
+
+            pub fn mul(&mut self,register: Register, value: RegisterValue<R,W>)-> Result<(), RegisterError> {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => match value {
+                            RegisterValue::Word(_) => Err(RegisterError::InvalidGeneralRegisterValue),
+                            RegisterValue::Other(other) => Ok(self.general[Register::$register as usize] *= other),
+                        },
+                    )*
+                    Register::PC => match value {
+                        RegisterValue::Word(word) => Ok(self.pc *= word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidProgramCounterValue),
+                    },
+                    Register::SP => match value {
+                        RegisterValue::Word(word) => Ok(self.sp *= word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidStackPointerValue),
+                    }
+                }
+            }
+
+            pub fn div(&mut self,register: Register, value: RegisterValue<R,W>)-> Result<(), RegisterError> {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => match value {
+                            RegisterValue::Word(_) => Err(RegisterError::InvalidGeneralRegisterValue),
+                            RegisterValue::Other(other) => Ok(self.general[Register::$register as usize] /= other),
+                        },
+                    )*
+                    Register::PC => match value {
+                        RegisterValue::Word(word) => Ok(self.pc /= word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidProgramCounterValue),
+                    },
+                    Register::SP => match value {
+                        RegisterValue::Word(word) => Ok(self.sp /= word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidStackPointerValue),
+                    }
+                }
+            }
+
+            pub fn inc(&mut self, register: Register) {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => self.general[Register::$register as usize] += 1.into(),
+                    )*
+                    Register::PC => {self.pc += 1.into()},
+                    Register::SP => {self.sp +=1.into()}
+                }
+            }
+
+            pub fn dec(&mut self, register: Register) {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => self.general[Register::$register as usize] -= 1.into(),
+                    )*
+                    Register::PC => self.pc -= 1.into(),
+                    Register::SP => self.sp -=1.into()
                 }
             }
         }

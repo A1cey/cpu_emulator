@@ -2,7 +2,7 @@ use thiserror::Error;
 
 use crate::instruction::{ExecutionError, Instruction};
 use crate::program::{Program, ProgramError};
-use crate::register::{RegisterSize, Registers};
+use crate::register::{Register, RegisterSize, Registers};
 use crate::stack::{Stack, Word};
 
 /// Processor struct
@@ -28,11 +28,17 @@ impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, 
         self.program = Some(program);
     }
 
+    pub fn run_program(&mut self) -> Result<(), ProcessorError> {
+        loop {
+            self.execute_next_instruction()?
+        }
+    }
+
     /// Execute the next instruction in the program
     pub fn execute_next_instruction(&mut self) -> Result<(), ProcessorError> {
         let program = self.program.ok_or(ProgramError::NoProgramLoaded)?;
-
         let instruction = program.get_instruction(self.registers.pc.into())?;
+        self.registers.inc(Register::PC);
 
         Instruction::execute(instruction, self).map_err(Into::into)
     }

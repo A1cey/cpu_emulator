@@ -15,10 +15,14 @@ fn main() {
             val: RegisterValue::Other(5),
         },
         Instruction::MoveVal {
-            to: Register::R7,
+            to: Register::R1,
             val: RegisterValue::Other(5),
         },
         Instruction::AddReg {
+            acc: Register::R0,
+            rhs: Register::R1,
+        },
+        Instruction::MulReg {
             acc: Register::R0,
             rhs: Register::R1,
         },
@@ -26,7 +30,7 @@ fn main() {
     let program = program::Program::new(instructions);
     let mut processor = processor::Processor::<u16, U16, 1024>::new();
     processor.load_program(&program);
-    let _ = processor.execute_next_instruction();
-    
-    println!("{:#?}",processor.registers);
+    let _ = processor.run_program();
+
+    println!("{:#?}", processor.registers);
 }
