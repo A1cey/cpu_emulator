@@ -1,9 +1,11 @@
+use std::ops::AddAssign;
+
 use thiserror::Error;
 
 use crate::stack::Word;
 
 /// Marker trait for register sizes.
-pub trait RegisterSize: Copy + Default + Sized {}
+pub trait RegisterSize: Copy + Default + Sized + AddAssign {}
 
 impl RegisterSize for u8 {}
 impl RegisterSize for u16 {}
@@ -49,6 +51,26 @@ macro_rules! def_registers {
                     )*
                     Register::PC => RegisterValue::Word(self.pc),
                     Register::SP => RegisterValue::Word(self.sp),
+                }
+            }
+
+            pub fn add(&mut self,register: Register, value: RegisterValue<R,W>)-> Result<(), RegisterError> {
+                match register {
+                    $(
+                        // This should never panic as the general register array's length is calculated by the amount of general registers
+                        Register::$register => match value {
+                            RegisterValue::Word(_) => Err(RegisterError::InvalidGeneralRegisterValue),
+                            RegisterValue::Other(other) => Ok(self.general[Register::$register as usize] += other),
+                        },
+                    )*
+                    Register::PC => match value {
+                        RegisterValue::Word(word) => Ok(self.pc += word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidProgramCounterValue),
+                    },
+                    Register::SP => match value {
+                        RegisterValue::Word(word) => Ok(self.sp += word),
+                        RegisterValue::Other(_) => Err(RegisterError::InvalidStackPointerValue),
+                    }
                 }
             }
 

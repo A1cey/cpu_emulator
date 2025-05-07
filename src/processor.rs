@@ -1,4 +1,6 @@
-use crate::instruction::Instruction;
+use thiserror::Error;
+
+use crate::instruction::{ExecutionError, Instruction};
 use crate::program::{Program, ProgramError};
 use crate::register::{RegisterSize, Registers};
 use crate::stack::{Stack, Word};
@@ -8,7 +10,7 @@ use crate::stack::{Stack, Word};
 pub struct Processor<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> {
     pub registers: Registers<R, W>,
     pub stack: Stack<W, STACK_SIZE>,
-    program: Option<&'a Program>,
+    program: Option<&'a Program<R, W, STACK_SIZE>>,
 }
 
 impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, STACK_SIZE> {
@@ -22,18 +24,24 @@ impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, 
     }
 
     /// Load a program into the processor
-    pub fn load_program(&mut self, program: &'a Program) {
+    pub fn load_program(&mut self, program: &'a Program<R, W, STACK_SIZE>) {
         self.program = Some(program);
     }
 
     /// Execute the next instruction in the program
-    pub fn execute_next_instruction(&mut self) -> Result<(), ProgramError> {
+    pub fn execute_next_instruction(&mut self) -> Result<(), ProcessorError> {
         let program = self.program.ok_or(ProgramError::NoProgramLoaded)?;
 
         let instruction = program.get_instruction(self.registers.pc.into())?;
 
-        Instruction::execute(instruction, self);
-
-        Ok(())
+        Instruction::execute(instruction, self).map_err(Into::into)
     }
+}
+
+#[derive(Error, Debug)]
+pub enum ProcessorError {
+    #[error("Program error")]
+    Program(#[from] ProgramError),
+    #[error("Execution error")]
+    Execution(#[from] ExecutionError),
 }

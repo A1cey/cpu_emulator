@@ -1,26 +1,31 @@
 use core::ops::Deref;
 use thiserror::Error;
 
-use crate::instruction::Instruction;
+use crate::{instruction::Instruction, register::RegisterSize, stack::Word};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[repr(transparent)]
-pub struct Program(Vec<Instruction>);
+pub struct Program<R: RegisterSize, W: Word, const STACK_SIZE: usize>(
+    Vec<Instruction<R, W, STACK_SIZE>>,
+);
 
-impl Deref for Program {
-    type Target = Vec<Instruction>;
+impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Deref for Program<R, W, STACK_SIZE> {
+    type Target = Vec<Instruction<R, W, STACK_SIZE>>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl Program {
-    pub fn new(instructions: impl IntoIterator<Item = Instruction>) -> Self {
+impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Program<R, W, STACK_SIZE> {
+    pub fn new(instructions: impl IntoIterator<Item = Instruction<R, W, STACK_SIZE>>) -> Self {
         Self(instructions.into_iter().collect())
     }
 
-    pub fn get_instruction(&self, index: usize) -> Result<&Instruction, ProgramError> {
+    pub fn get_instruction(
+        &self,
+        index: usize,
+    ) -> Result<&Instruction<R, W, STACK_SIZE>, ProgramError> {
         self.get(index).ok_or(ProgramError::PCOutOfBounds {
             pc: index,
             program_len: self.len(),

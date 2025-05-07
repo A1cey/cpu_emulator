@@ -1,8 +1,9 @@
 use core::ops::{Deref, DerefMut};
+use std::ops::AddAssign;
 use thiserror::Error;
 
 /// Marker trait for types that can be used as words in a stack.
-pub trait Word: Copy + Default + Sized + Into<usize> {}
+pub trait Word: Copy + Default + Sized + Into<usize> + AddAssign {}
 
 macro_rules! impl_word {
     ($name: ident, $type: ty $(,)? ) => {
@@ -21,6 +22,12 @@ macro_rules! impl_word {
         impl ::core::convert::From<$type> for $name {
             fn from(value: $type) -> Self {
                 Self(value)
+            }
+        }
+
+        impl ::core::ops::AddAssign for $name {
+            fn add_assign(&mut self, other: Self) {
+                *self = Self(self.0 + other.0);
             }
         }
     };
