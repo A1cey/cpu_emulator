@@ -9,54 +9,59 @@ use crate::{
 // TODO: Instruction set trait to implement different instruction sets
 
 /// Instruction set for the processor
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Instruction<R: RegisterSize, W: Word, const STACK_SIZE: usize> {
-    /// No operation
+    /// No operation.
     Nop,
-    /// End of program
+    /// End of program.
     End,
-    /// Move value from one register to another
+    /// Copy a value from one register to another register.
     MoveReg { to: Register, from: Register },
-    /// Move value into register
+    /// Copy a value into a register.
     MoveVal {
         to: Register,
         val: RegisterValue<R, W>,
     },
-    /// Add the value of two registers and store it in the first
+    /// Add the value of a register (rhs) to another register (acc).
     AddReg { acc: Register, rhs: Register },
-    /// Add a value to a registers and store it in the register
+    /// Add a value to a register (acc).
     AddVal {
         acc: Register,
         val: RegisterValue<R, W>,
     },
-    /// Subtract the value of two registers and store it in the first
+    /// Subtract the value of a register (rhs) from another register (acc).
     SubReg { acc: Register, rhs: Register },
-    /// Subtract a value to a registers and store it in the register
+    /// Subtract a value from a register (acc).
     SubVal {
         acc: Register,
         val: RegisterValue<R, W>,
     },
-    /// Multiply the value of two registers and store it in the first
+    /// Multiply the value of a register (rhs) with the value of another register (acc).
+    /// The result is stored in acc.
     MulReg { acc: Register, rhs: Register },
-    /// Multiply a value to a registers and store it in the register
+    /// Multiply a value to with the value of a register (acc).
+    /// The result is stored in this register.
     MulVal {
         acc: Register,
         val: RegisterValue<R, W>,
     },
-    /// Divide the value of two registers and store it in the first
+    /// Divide the value of a register (acc) by the value of another register (rhs).
+    /// The result is stored in acc.
     DivReg { acc: Register, rhs: Register },
-    /// Divide a value to a registers and store it in the register
+    /// Divide the value of a register (acc) by another value.
+    /// The result is stored in the register.
     DivVal {
         acc: Register,
         val: RegisterValue<R, W>,
     },
-    /// Increase the value in a register by one
+    /// Increment the value in a register by one.
     Inc { reg: Register },
-    /// Decrease the value in a register by one
+    /// Decrement the value in a register by one.
     Dec { reg: Register },
 }
 
 impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_SIZE> {
+    /// Execute an instruction on a processor.
     pub fn execute(
         instruction: &Instruction<R, W, STACK_SIZE>,
         processor: &mut Processor<R, W, STACK_SIZE>,
@@ -80,6 +85,8 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         .map_err(Into::into)
     }
 
+    /// Copy a value from a register to another register.
+    #[inline]
     fn move_reg(
         to: Register,
         from: Register,
@@ -89,6 +96,8 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         Self::move_val(to, val, processor)
     }
 
+    /// Copy a value into a register.
+    #[inline]
     fn move_val(
         to: Register,
         val: RegisterValue<R, W>,
@@ -97,6 +106,8 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         processor.registers.set(to, val)
     }
 
+    /// Add the value of a register (rhs) to another register (acc).
+    #[inline]
     fn add_reg(
         acc: Register,
         rhs: Register,
@@ -106,6 +117,8 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         Self::add_val(acc, val, processor)
     }
 
+    /// Add a value to a register (acc).
+    #[inline]
     fn add_val(
         acc: Register,
         val: RegisterValue<R, W>,
@@ -114,6 +127,8 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         processor.registers.add(acc, val)
     }
 
+    /// Subtract the value of a register (rhs) from another register (acc).
+    #[inline]
     fn sub_reg(
         acc: Register,
         rhs: Register,
@@ -123,6 +138,8 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         Self::sub_val(acc, val, processor)
     }
 
+    /// Subtract a value from a register (acc).
+    #[inline]
     fn sub_val(
         acc: Register,
         val: RegisterValue<R, W>,
@@ -131,6 +148,9 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         processor.registers.sub(acc, val)
     }
 
+    /// Multiply the value of a register (rhs) with the value of another register (acc).
+    /// The result is stored in acc.
+    #[inline]
     fn mul_reg(
         acc: Register,
         rhs: Register,
@@ -140,6 +160,9 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         Self::mul_val(acc, val, processor)
     }
 
+    /// Multiply a value to with the value of a register (acc).
+    /// The result is stored in this register.
+    #[inline]
     fn mul_val(
         acc: Register,
         val: RegisterValue<R, W>,
@@ -148,6 +171,9 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         processor.registers.mul(acc, val)
     }
 
+    /// Divide the value of a register (acc) by the value of another register (rhs).
+    /// The result is stored in acc.
+    #[inline]
     fn div_reg(
         acc: Register,
         rhs: Register,
@@ -157,6 +183,9 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         Self::div_val(acc, val, processor)
     }
 
+    /// Divide the value of a register (acc) by another value.
+    /// The result is stored in the register.
+    #[inline]
     fn div_val(
         acc: Register,
         val: RegisterValue<R, W>,
@@ -165,12 +194,16 @@ impl<R: RegisterSize, W: Word, const STACK_SIZE: usize> Instruction<R, W, STACK_
         processor.registers.div(acc, val)
     }
 
-    fn inc(register: Register, processor: &mut Processor<R, W, STACK_SIZE>) -> () {
-        processor.registers.inc(register)
+    /// Increment the value in a register by one.
+    #[inline]
+    fn inc(reg: Register, processor: &mut Processor<R, W, STACK_SIZE>) -> () {
+        processor.registers.inc(reg)
     }
 
-    fn dec(register: Register, processor: &mut Processor<R, W, STACK_SIZE>) -> () {
-        processor.registers.dec(register)
+    /// Decrement the value in a register by one.
+    #[inline]
+    fn dec(reg: Register, processor: &mut Processor<R, W, STACK_SIZE>) -> () {
+        processor.registers.dec(reg)
     }
 }
 

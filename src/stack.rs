@@ -1,9 +1,10 @@
 use core::ops::{AddAssign, Deref, DerefMut, DivAssign, MulAssign, SubAssign};
+use std::ops::Add;
 use thiserror::Error;
 
 /// Marker trait for types that can be used as words in a stack.
 pub trait Word:
-    Copy + Default + Sized + Into<usize> + AddAssign + SubAssign + MulAssign + DivAssign + From<i32>
+    Copy + Default + Into<usize> + From<i32> + AddAssign + SubAssign + MulAssign + DivAssign
 {
 }
 

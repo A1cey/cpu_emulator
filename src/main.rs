@@ -2,9 +2,9 @@ use instruction::Instruction;
 use register::{Register, RegisterValue};
 use stack::U16;
 
-mod instruction;
-mod processor;
-mod program;
+pub mod instruction;
+pub mod processor;
+pub mod program;
 mod register;
 mod stack;
 

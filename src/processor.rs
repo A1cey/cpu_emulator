@@ -14,7 +14,7 @@ pub struct Processor<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> {
 }
 
 impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, STACK_SIZE> {
-    /// Create a new processor instance
+    /// Create a new processor instance.
     pub fn new() -> Self {
         Self {
             registers: Registers::new(),
@@ -23,24 +23,29 @@ impl<'a, R: RegisterSize, W: Word, const STACK_SIZE: usize> Processor<'a, R, W, 
         }
     }
 
-    /// Load a program into the processor
+    /// Load a program into the processor.
     pub fn load_program(&mut self, program: &'a Program<R, W, STACK_SIZE>) {
         self.program = Some(program);
     }
 
+    /// Run the entire program.
     pub fn run_program(&mut self) -> Result<(), ProcessorError> {
         loop {
             self.execute_next_instruction()?
         }
     }
 
-    /// Execute the next instruction in the program
+    /// Execute the current instruction in the program (where pc points to) and increment pc.
     pub fn execute_next_instruction(&mut self) -> Result<(), ProcessorError> {
         let program = self.program.ok_or(ProgramError::NoProgramLoaded)?;
+
         let instruction = program.get_instruction(self.registers.pc.into())?;
+
+        Instruction::execute(instruction, self)?;
+
         self.registers.inc(Register::PC);
 
-        Instruction::execute(instruction, self).map_err(Into::into)
+        Ok(())
     }
 }
 
