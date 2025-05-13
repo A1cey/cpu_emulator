@@ -14,6 +14,7 @@ macro_rules! def_registers {
         pub const COUNT: usize = Idents::__Count__ as usize;
 
         /// Registers struct
+        /// The register sizes correspond to the Stack Word size.
         #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
         pub struct Registers<W> {
             pub general: [W; COUNT],
@@ -45,10 +46,6 @@ macro_rules! def_registers {
             }
 
             /// Set the value of a register.
-            ///
-            /// # Errors
-            ///
-            /// This function will return an error if the type of the value does not match the type of the register.
             #[inline]
             pub fn set(&mut self, reg: Register, val: W) {
                 match reg {
@@ -85,6 +82,18 @@ macro_rules! def_registers {
                     Register::SP => self.sp -=1.into()
                 }
             }
+
+            fn fmt_general_registers(&self) -> String {
+                let s:String  = self.general.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
+                format!("[{s}]")
+            }
+        }
+
+
+        impl<W: Word> ::core::fmt::Display for Registers<W> {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> Result<(), ::core::fmt::Error> {
+                write!(f, "general:\t{}\npc:\t\t{}\nsp:\t\t{}", self.fmt_general_registers(), self.pc, self.sp)
+            }
         }
 
         /// Enum of all register names
@@ -104,11 +113,4 @@ def_registers!(
 );
 
 #[derive(Error, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
-pub enum RegisterError {
-    #[error("Invalid general register value")]
-    InvalidGeneralRegisterValue,
-    #[error("Invalid program counter value")]
-    InvalidProgramCounterValue,
-    #[error("Invalid stack pointer value")]
-    InvalidStackPointerValue,
-}
+pub enum RegisterError {}

@@ -38,7 +38,7 @@ impl<'a, W: Word, const STACK_SIZE: usize> Processor<'a, W, STACK_SIZE> {
 
     /// Execute the current instruction in the program (where pc points to) and increment pc.
     pub fn execute_next_instruction(&mut self) -> Result<ControlFlow<()>, ProcessorError> {
-        println!("{:?}", self.registers);
+        println!("{}", self.registers);
 
         let program = self.program.ok_or(ProgramError::NoProgramLoaded)?;
 

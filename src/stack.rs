@@ -1,10 +1,12 @@
-use core::fmt::Debug;
+use core::fmt::{Debug, Display};
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use thiserror::Error;
 
 /// Marker trait for types that can be used as words in a stack.
+/// For negtive numbers a signed type must be used, e.g. i32.
 pub trait Word:
     Debug
+    + Display
     + Copy
     + Default
     + Into<usize>
@@ -40,6 +42,12 @@ macro_rules! impl_word {
         pub struct $name($type);
 
         impl Word for $name {}
+
+        impl ::core::fmt::Display for $name {
+            fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> Result<(), ::core::fmt::Error> {
+                write!(f, "{}", self.0)
+            }
+        }
 
         impl ::core::convert::Into<usize> for $name {
             fn into(self) -> usize {

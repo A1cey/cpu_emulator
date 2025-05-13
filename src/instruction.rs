@@ -4,7 +4,7 @@ use thiserror::Error;
 
 use crate::{
     processor::Processor,
-    register::{self, Register, RegisterError},
+    register::{Register, RegisterError},
     stack::Word,
 };
 
