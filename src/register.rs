@@ -22,6 +22,12 @@ macro_rules! def_registers {
             pub sp: W,
         }
 
+        impl<W: Word> Default for Registers<W> {
+            fn default() -> Self {
+                Self::new()
+            }
+        }
+
         impl<W: Word> Registers<W> {
             /// Create a new set of registers with all values initialized to the default value.
             pub fn new() -> Self {
@@ -34,7 +40,7 @@ macro_rules! def_registers {
 
             /// Get the value of a register.
             #[inline]
-            pub fn get(&self, reg: Register) -> W {
+            pub const fn get(&self, reg: Register) -> W {
                 match reg {
                     $(
                         // This will never panic as the general register array's length is calculated by the amount of general registers

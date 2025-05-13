@@ -15,8 +15,15 @@ pub struct Processor<'a, W: Word, const STACK_SIZE: usize> {
     program: Option<&'a Program<W, STACK_SIZE>>,
 }
 
+impl<W: Word, const STACK_SIZE: usize> Default for Processor<'_, W, STACK_SIZE> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<'a, W: Word, const STACK_SIZE: usize> Processor<'a, W, STACK_SIZE> {
     /// Create a new processor instance.
+    #[must_use]
     pub fn new() -> Self {
         Self {
             registers: Registers::new(),
@@ -31,12 +38,18 @@ impl<'a, W: Word, const STACK_SIZE: usize> Processor<'a, W, STACK_SIZE> {
     }
 
     /// Run the entire program.
+    ///
+    /// # Errors
+    /// Returns Processor error if an error occured during execution.
     pub fn run_program(&mut self) -> Result<(), ProcessorError> {
-        while let ControlFlow::Continue(_) = self.execute_next_instruction()? {}
+        while self.execute_next_instruction()? == ControlFlow::Continue(()) {}
         Ok(())
     }
 
     /// Execute the current instruction in the program (where pc points to) and increment pc.
+    ///
+    /// # Errors
+    /// Returns Processor error if an error occured during execution.
     pub fn execute_next_instruction(&mut self) -> Result<ControlFlow<()>, ProcessorError> {
         println!("{}", self.registers);
 

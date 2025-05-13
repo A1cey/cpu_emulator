@@ -1,6 +1,6 @@
 use instruction::Instruction;
 use register::Register;
-use stack::{I32, U32};
+use stack::I32;
 
 pub mod instruction;
 pub mod processor;
@@ -32,7 +32,7 @@ fn main() {
     let mut processor = processor::Processor::<I32, 1024>::new();
     processor.load_program(&program);
     if let Err(err) = processor.run_program() {
-        println!("{:#?}", err);
+        println!("{err:#?}");
     } else {
         println!("{}", processor.registers);
     }

@@ -20,12 +20,13 @@ impl<W: Word, const STACK_SIZE: usize> Program<W, STACK_SIZE> {
         Self(instructions.into_iter().collect())
     }
 
-    pub fn get_instruction(
-        &self,
-        index: usize,
-    ) -> Result<&Instruction<W, STACK_SIZE>, ProgramError> {
-        self.get(index).ok_or(ProgramError::PCOutOfBounds {
-            pc: index,
+    /// Returns instruction at the provided index.
+    ///
+    /// # Errors
+    /// Returns `PCOutOfBounds` error if the program counter is not in bounds.
+    pub fn get_instruction(&self, pc: usize) -> Result<&Instruction<W, STACK_SIZE>, ProgramError> {
+        self.get(pc).ok_or(ProgramError::PCOutOfBounds {
+            pc,
             program_len: self.len(),
         })
     }

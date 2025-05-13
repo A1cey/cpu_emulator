@@ -28,11 +28,25 @@ macro_rules! from_i32 {
     ($name: ident, $type: ty $(,)? ) => {
         impl ::core::convert::From<i32> for $name {
             fn from(value: i32) -> Self {
+                #[allow(clippy::cast_possible_truncation)]
+                #[allow(clippy::cast_lossless)]
+                #[allow(clippy::cast_sign_loss)]
                 $name(value as $type)
             }
         }
     };
 }
+
+// /// This macro is used to implement From<_> for usize for the Word variants.
+// macro_rules! from_word_for_usize {
+//     ($name: ident $(,)? ) => {
+//         impl ::core::convert::From<$name> for usize {
+//             fn from(value: $name) -> usize {
+//                 value.0 as usize
+//             }
+//         }
+//     };
+// }
 
 /// This macro can be used to implement the Word trait for a Wrapper struct around another type like u8.
 macro_rules! impl_word {
@@ -49,7 +63,10 @@ macro_rules! impl_word {
             }
         }
 
+        #[allow(clippy::from_over_into)]
         impl ::core::convert::Into<usize> for $name {
+            #[allow(clippy::cast_sign_loss)]
+            #[allow(clippy::cast_possible_truncation)]
             fn into(self) -> usize {
                 self.0 as usize
             }
@@ -145,6 +162,18 @@ from_i32!(I64, i64);
 from_i32!(I128, i128);
 from_i32!(ISize, isize);
 
+// from_word_for_usize!(U8);
+// from_word_for_usize!(U16);
+// from_word_for_usize!(U32);
+// from_word_for_usize!(U64);
+// from_word_for_usize!(U128);
+// from_word_for_usize!(USize);
+// from_word_for_usize!(I8);
+// from_word_for_usize!(I16);
+// from_word_for_usize!(I64);
+// from_word_for_usize!(I128);
+// from_word_for_usize!(ISize);
+
 /// Stack
 #[derive(Debug, Clone)]
 #[repr(transparent)]
@@ -164,6 +193,12 @@ impl<T: Word, const SIZE: usize> DerefMut for Stack<T, SIZE> {
     }
 }
 
+impl<T: Word, const SIZE: usize> Default for Stack<T, SIZE> {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 impl<T: Word, const SIZE: usize> Stack<T, SIZE> {
     /// Create a new stack with all elements initialized to the default value.
     pub fn new() -> Self {
@@ -171,7 +206,7 @@ impl<T: Word, const SIZE: usize> Stack<T, SIZE> {
     }
 
     /// Read a value from the stack at the given stack pointer.
-    /// Returns the value on the stack or an OutOfBounds error.
+    /// Returns the value on the stack or an `OutOfBounds` error.
     fn read(&self, sp: usize) -> Result<&T, StackError> {
         self.get(sp).ok_or(StackError::OutOfBounds {
             sp,
@@ -180,18 +215,17 @@ impl<T: Word, const SIZE: usize> Stack<T, SIZE> {
     }
 
     /// Write a value to the stack at the given stack pointer.
-    /// Returns an OutOfBounds error if the stack pointer is out of bounds.
+    /// Returns an `OutOfBounds` error if the stack pointer is out of bounds.
     fn write(&mut self, sp: usize, value: T) -> Result<(), StackError> {
-        match self.get_mut(sp) {
-            Some(adr) => {
+        let stack_size = self.len();
+
+        self.get_mut(sp).map_or_else(
+            || Err(StackError::OutOfBounds { sp, stack_size }),
+            |adr| {
                 *adr = value;
                 Ok(())
-            }
-            None => Err(StackError::OutOfBounds {
-                sp,
-                stack_size: self.len(),
-            }),
-        }
+            },
+        )
     }
 }
 
