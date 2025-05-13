@@ -1,13 +1,38 @@
-use core::ops::{AddAssign, Deref, DerefMut, DivAssign, MulAssign, SubAssign};
-use std::ops::Add;
+use core::fmt::Debug;
+use core::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use thiserror::Error;
 
 /// Marker trait for types that can be used as words in a stack.
 pub trait Word:
-    Copy + Default + Into<usize> + From<i32> + AddAssign + SubAssign + MulAssign + DivAssign
+    Debug
+    + Copy
+    + Default
+    + Into<usize>
+    + From<i32>
+    + Eq
+    + Add<Self, Output = Self>
+    + Sub<Self, Output = Self>
+    + Mul<Self, Output = Self>
+    + Div<Self, Output = Self>
+    + AddAssign
+    + SubAssign
+    + MulAssign
+    + DivAssign
 {
 }
 
+/// This macro is used to implement the From<i32> trait.
+macro_rules! from_i32 {
+    ($name: ident, $type: ty $(,)? ) => {
+        impl ::core::convert::From<i32> for $name {
+            fn from(value: i32) -> Self {
+                $name(value as $type)
+            }
+        }
+    };
+}
+
+/// This macro can be used to implement the Word trait for a Wrapper struct around another type like u8.
 macro_rules! impl_word {
     ($name: ident, $type: ty $(,)? ) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -25,12 +50,6 @@ macro_rules! impl_word {
         impl ::core::convert::From<$type> for $name {
             fn from(value: $type) -> Self {
                 Self(value)
-            }
-        }
-
-        impl ::core::convert::From<i32> for $name {
-            fn from(value: i32) -> Self {
-                Self(value as $type)
             }
         }
 
@@ -57,13 +76,66 @@ macro_rules! impl_word {
                 *self = Self(self.0 / other.0);
             }
         }
+
+        impl ::core::ops::Add for $name {
+            type Output = Self;
+
+            fn add(self, rhs: Self) -> Self {
+                Self(self.0 + rhs.0)
+            }
+        }
+
+        impl ::core::ops::Sub for $name {
+            type Output = Self;
+
+            fn sub(self, rhs: Self) -> Self {
+                Self(self.0 - rhs.0)
+            }
+        }
+
+        impl ::core::ops::Mul for $name {
+            type Output = Self;
+
+            fn mul(self, rhs: Self) -> Self {
+                Self(self.0 * rhs.0)
+            }
+        }
+
+        impl ::core::ops::Div for $name {
+            type Output = Self;
+
+            fn div(self, rhs: Self) -> Self {
+                Self(self.0 / rhs.0)
+            }
+        }
     };
 }
 
+impl_word!(U8, u8);
 impl_word!(U16, u16);
 impl_word!(U32, u32);
 impl_word!(U64, u64);
+impl_word!(U128, u128);
 impl_word!(USize, usize);
+impl_word!(I8, i8);
+impl_word!(I16, i16);
+impl_word!(I32, i32);
+impl_word!(I64, i64);
+impl_word!(I128, i128);
+impl_word!(ISize, isize);
+
+// Implements From<i32> for all types except i32 as it already is defined for i32 using impl_word!
+from_i32!(U8, u8);
+from_i32!(U16, u16);
+from_i32!(U32, u32);
+from_i32!(U64, u64);
+from_i32!(U128, u128);
+from_i32!(USize, usize);
+from_i32!(I8, i8);
+from_i32!(I16, i16);
+from_i32!(I64, i64);
+from_i32!(I128, i128);
+from_i32!(ISize, isize);
 
 /// Stack
 #[derive(Debug, Clone)]

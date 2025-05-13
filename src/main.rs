@@ -1,6 +1,6 @@
 use instruction::Instruction;
-use register::{Register, RegisterValue};
-use stack::U16;
+use register::Register;
+use stack::{I8, I64, U8, U32, USize};
 
 pub mod instruction;
 pub mod processor;
@@ -10,13 +10,13 @@ mod stack;
 
 fn main() {
     let instructions = vec![
-        Instruction::MoveVal {
-            to: Register::R0,
-            val: RegisterValue::Other(5),
+        Instruction::SubVal {
+            acc: Register::R0,
+            val: 5.into(),
         },
         Instruction::MoveVal {
             to: Register::R1,
-            val: RegisterValue::Other(5),
+            val: 6.into(),
         },
         Instruction::AddReg {
             acc: Register::R0,
@@ -26,11 +26,14 @@ fn main() {
             acc: Register::R0,
             rhs: Register::R1,
         },
+        Instruction::End,
     ];
     let program = program::Program::new(instructions);
-    let mut processor = processor::Processor::<u16, U16, 1024>::new();
+    let mut processor = processor::Processor::<U32, 1024>::new();
     processor.load_program(&program);
-    let _ = processor.run_program();
-
-    println!("{:#?}", processor.registers);
+    if let Err(err) = processor.run_program() {
+        println!("{:#?}", err)
+    } else {
+        println!("{:?}", processor.registers);
+    }
 }
