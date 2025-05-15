@@ -45,6 +45,8 @@ pub enum Instruction<W: Word, const STACK_SIZE: usize> {
     Inc { reg: Register },
     /// Decrement the value in a register by one.
     Dec { reg: Register },
+    /// Set program pointer to value, effectively jumping to the instruction at this point in the program.
+    Jump {to: W}
 }
 
 impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
@@ -68,6 +70,7 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
             Self::DivVal { acc, val } => Self::div_val(*acc, *val, processor),
             Self::Inc { reg } => Self::inc(*reg, processor),
             Self::Dec { reg } => Self::dec(*reg, processor),
+            Self::Jump { to } => Self::jmp(*to, processor)
         };
 
         ControlFlow::Continue(())
@@ -156,6 +159,12 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
     #[inline]
     fn dec(reg: Register, processor: &mut Processor<W, STACK_SIZE>) {
         processor.registers.dec(reg);
+    }
+    
+    /// Set program counter to value, effectively jumping to the instruction at this point in the program.
+    #[inline]
+    fn jmp(to: W, processor: &mut Processor<W, STACK_SIZE>) {
+        processor.registers.set(Register::PC, to);
     }
 }
 
