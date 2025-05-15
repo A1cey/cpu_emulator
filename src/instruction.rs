@@ -79,49 +79,49 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
     /// Copy a value from a register to another register.
     #[inline]
     fn move_reg(to: Register, from: Register, processor: &mut Processor<W, STACK_SIZE>) {
-        let val = processor.registers.get(from);
+        let val = processor.registers.get_reg(from);
         Self::move_val(to, val, processor);
     }
 
     /// Copy a value into a register.
     #[inline]
     fn move_val(to: Register, val: W, processor: &mut Processor<W, STACK_SIZE>) {
-        processor.registers.set(to, val);
+        processor.registers.set_reg(to, val);
     }
 
     /// Add the value of a register (rhs) to another register (acc).
     #[inline]
     fn add_reg(acc: Register, rhs: Register, processor: &mut Processor<W, STACK_SIZE>) {
-        let val = processor.registers.get(rhs);
+        let val = processor.registers.get_reg(rhs);
         Self::add_val(acc, val, processor);
     }
 
     /// Add a value to a register (acc).
     #[inline]
     fn add_val(acc: Register, val: W, processor: &mut Processor<W, STACK_SIZE>) {
-        let a = processor.registers.get(acc);
-        processor.registers.set(acc, a + val);
+        let a = processor.registers.get_reg(acc);
+        processor.registers.set_reg(acc, a + val);
     }
 
     /// Subtract the value of a register (rhs) from another register (acc).
     #[inline]
     fn sub_reg(acc: Register, rhs: Register, processor: &mut Processor<W, STACK_SIZE>) {
-        let val = processor.registers.get(rhs);
+        let val = processor.registers.get_reg(rhs);
         Self::sub_val(acc, val, processor);
     }
 
     /// Subtract a value from a register (acc).
     #[inline]
     fn sub_val(acc: Register, val: W, processor: &mut Processor<W, STACK_SIZE>) {
-        let a = processor.registers.get(acc);
-        processor.registers.set(acc, a - val);
+        let a = processor.registers.get_reg(acc);
+        processor.registers.set_reg(acc, a - val);
     }
 
     /// Multiply the value of a register (rhs) with the value of another register (acc).
     /// The result is stored in acc.
     #[inline]
     fn mul_reg(acc: Register, rhs: Register, processor: &mut Processor<W, STACK_SIZE>) {
-        let val = processor.registers.get(rhs);
+        let val = processor.registers.get_reg(rhs);
         Self::mul_val(acc, val, processor);
     }
 
@@ -129,15 +129,15 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
     /// The result is stored in this register.
     #[inline]
     fn mul_val(acc: Register, val: W, processor: &mut Processor<W, STACK_SIZE>) {
-        let a = processor.registers.get(acc);
-        processor.registers.set(acc, a * val);
+        let a = processor.registers.get_reg(acc);
+        processor.registers.set_reg(acc, a * val);
     }
 
     /// Divide the value of a register (acc) by the value of another register (rhs).
     /// The result is stored in acc.
     #[inline]
     fn div_reg(acc: Register, rhs: Register, processor: &mut Processor<W, STACK_SIZE>) {
-        let val = processor.registers.get(rhs);
+        let val = processor.registers.get_reg(rhs);
         Self::div_val(acc, val, processor);
     }
 
@@ -145,8 +145,8 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
     /// The result is stored in the register.
     #[inline]
     fn div_val(acc: Register, val: W, processor: &mut Processor<W, STACK_SIZE>) {
-        let a = processor.registers.get(acc);
-        processor.registers.set(acc, a / val);
+        let a = processor.registers.get_reg(acc);
+        processor.registers.set_reg(acc, a / val);
     }
 
     /// Increment the value in a register by one.
@@ -164,7 +164,7 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
     /// Set program counter to value, effectively jumping to the instruction at this point in the program.
     #[inline]
     fn jmp(to: W, processor: &mut Processor<W, STACK_SIZE>) {
-        processor.registers.set(Register::PC, to);
+        processor.registers.set_reg(Register::PC, to);
     }
 }
 
