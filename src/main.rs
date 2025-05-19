@@ -1,6 +1,8 @@
+#![warn(incomplete_features)]
+#![feature(generic_const_exprs)]
 use instruction::Instruction;
 use register::Register;
-use stack::{I32, I8};
+use stack::{I16, I32, I8};
 
 pub mod instruction;
 pub mod processor;
@@ -29,7 +31,7 @@ fn main() {
         Instruction::End,
     ];
     let program = program::Program::new(instructions);
-    let mut processor = processor::Processor::<I8, 1024>::new();
+    let mut processor = processor::Processor::<Instruction<I8, 1024>>::new();
     processor.load_program(&program);
     if let Err(err) = processor.run_program() {
         println!("{err:#?}");

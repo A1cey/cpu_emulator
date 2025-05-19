@@ -1,5 +1,4 @@
 use core::fmt::Debug;
-use std::fmt::format;
 use thiserror::Error;
 
 use crate::stack::Word;
@@ -56,7 +55,7 @@ macro_rules! def_registers {
                     Register::PC => self.pc,
                     Register::SP => self.sp,
                 }
-            }       
+            }
 
             /// Set the value of a register.
             #[inline]
@@ -69,7 +68,7 @@ macro_rules! def_registers {
                     Register::SP => self.sp = val
                 }
             }
-            
+
             /// Get the value of a flag.
             #[inline]
             pub const fn get_flag(&self, f: Flag) -> bool {
@@ -78,13 +77,13 @@ macro_rules! def_registers {
                     Flag::O => self.flags[1],
                     Flag::C => self.flags[2]
                 }
-            }    
-    
+            }
+
             /// Set the value of a flag.
             #[inline]
             pub const fn set_flag(&mut self, f: Flag, val: bool) {
                 self.flags[f as usize] = val;
-            }     
+            }
 
             /// Increment the value in a register by one.
             #[inline]
@@ -116,10 +115,10 @@ macro_rules! def_registers {
                 let s:String  = self.general.iter().map(ToString::to_string).collect::<Vec<_>>().join(", ");
                 format!("[{s}]")
             }
-            
+
             fn fmt_flags(&self) -> String {
                 let mut s = String::new();
-            
+
                 s.push_str(format!("Z: {}, ", self.flags[0]).as_str());
                 s.push_str(format!("O: {}, ", self.flags[1]).as_str());
                 s.push_str(format!("C: {}", self.flags[2]).as_str());
@@ -158,7 +157,7 @@ pub enum Flag {
     /// Overflow flag
     O,
     /// Carry flag
-    C
+    C,
 }
 
 #[derive(Error, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]

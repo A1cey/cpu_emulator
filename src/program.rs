@@ -1,22 +1,22 @@
 use core::ops::Deref;
 use thiserror::Error;
 
-use crate::{instruction::Instruction, stack::Word};
+use crate::instruction::{InstructionSet};
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[repr(transparent)]
-pub struct Program<W: Word, const STACK_SIZE: usize>(Vec<Instruction<W, STACK_SIZE>>);
+pub struct Program<IS: InstructionSet>(Vec<IS::Instruction>);
 
-impl<W: Word, const STACK_SIZE: usize> Deref for Program<W, STACK_SIZE> {
-    type Target = Vec<Instruction<W, STACK_SIZE>>;
+impl< IS: InstructionSet> Deref for Program<IS> {
+    type Target = Vec<IS::Instruction>;
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<W: Word, const STACK_SIZE: usize> Program<W, STACK_SIZE> {
-    pub fn new(instructions: impl IntoIterator<Item = Instruction<W, STACK_SIZE>>) -> Self {
+impl<IS: InstructionSet> Program<IS> {
+    pub fn new(instructions: impl IntoIterator<Item = IS::Instruction>) -> Self {
         Self(instructions.into_iter().collect())
     }
 
@@ -24,7 +24,7 @@ impl<W: Word, const STACK_SIZE: usize> Program<W, STACK_SIZE> {
     ///
     /// # Errors
     /// Returns `PCOutOfBounds` error if the program counter is not in bounds.
-    pub fn get_instruction(&self, pc: usize) -> Result<&Instruction<W, STACK_SIZE>, ProgramError> {
+    pub fn get_instruction(&self, pc: usize) -> Result<&IS::Instruction, ProgramError> {
         self.get(pc).ok_or(ProgramError::PCOutOfBounds {
             pc,
             program_len: self.len(),

@@ -2,6 +2,8 @@ use core::fmt::{Debug, Display};
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use thiserror::Error;
 
+use crate::instruction::InstructionSet;
+
 /// Marker trait for types that can be used as words in a stack.
 /// For negtive numbers a signed type must be used, e.g. i32.
 pub trait Word:
@@ -177,37 +179,37 @@ from_i32!(ISize, isize);
 /// Stack
 #[derive(Debug, Clone)]
 #[repr(transparent)]
-pub struct Stack<T: Word, const SIZE: usize>(pub [T; SIZE]);
+pub struct Stack<IS: InstructionSet>(pub [IS::W; IS::STACK_SIZE]) where [(); IS::STACK_SIZE]:;
 
-impl<T: Word, const SIZE: usize> Deref for Stack<T, SIZE> {
-    type Target = [T; SIZE];
+impl<IS:InstructionSet> Deref for Stack<IS>where [(); IS::STACK_SIZE]: {
+    type Target = [IS::W; IS::STACK_SIZE];
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<T: Word, const SIZE: usize> DerefMut for Stack<T, SIZE> {
+impl<IS:InstructionSet> DerefMut for Stack<IS>where [(); IS::STACK_SIZE]: {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<T: Word, const SIZE: usize> Default for Stack<T, SIZE> {
+impl<IS:InstructionSet> Default for Stack<IS>where [(); IS::STACK_SIZE]: {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<T: Word, const SIZE: usize> Stack<T, SIZE> {
+impl<IS:InstructionSet> Stack<IS>where [(); IS::STACK_SIZE]: {
     /// Create a new stack with all elements initialized to the default value.
-    pub fn new() -> Self {
-        Self([T::default(); SIZE])
+    pub fn new() -> Self where [(); IS::STACK_SIZE]: {
+        Self([IS::W::default(); IS::STACK_SIZE])
     }
 
     /// Read a value from the stack at the given stack pointer.
     /// Returns the value on the stack or an `OutOfBounds` error.
-    fn read(&self, sp: usize) -> Result<&T, StackError> {
+    fn read(&self, sp: usize) -> Result<&IS::W, StackError> {
         self.get(sp).ok_or(StackError::OutOfBounds {
             sp,
             stack_size: self.len(),
@@ -216,7 +218,7 @@ impl<T: Word, const SIZE: usize> Stack<T, SIZE> {
 
     /// Write a value to the stack at the given stack pointer.
     /// Returns an `OutOfBounds` error if the stack pointer is out of bounds.
-    fn write(&mut self, sp: usize, value: T) -> Result<(), StackError> {
+    fn write(&mut self, sp: usize, value: IS::W) -> Result<(), StackError> {
         let stack_size = self.len();
 
         self.get_mut(sp).map_or_else(
