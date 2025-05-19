@@ -1,13 +1,13 @@
 use core::ops::Deref;
 use thiserror::Error;
 
-use crate::instruction::{InstructionSet};
+use crate::instruction::InstructionSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[repr(transparent)]
-pub struct Program<IS: InstructionSet>(Vec<IS::Instruction>);
+pub struct Program<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>>(Vec<IS::Instruction>);
 
-impl< IS: InstructionSet> Deref for Program<IS> {
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Deref for Program<STACK_SIZE, IS> {
     type Target = Vec<IS::Instruction>;
 
     fn deref(&self) -> &Self::Target {
@@ -15,7 +15,7 @@ impl< IS: InstructionSet> Deref for Program<IS> {
     }
 }
 
-impl<IS: InstructionSet> Program<IS> {
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Program<STACK_SIZE, IS> {
     pub fn new(instructions: impl IntoIterator<Item = IS::Instruction>) -> Self {
         Self(instructions.into_iter().collect())
     }

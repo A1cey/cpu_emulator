@@ -179,32 +179,32 @@ from_i32!(ISize, isize);
 /// Stack
 #[derive(Debug, Clone)]
 #[repr(transparent)]
-pub struct Stack<IS: InstructionSet>(pub [IS::W; IS::STACK_SIZE]) where [(); IS::STACK_SIZE]:;
+pub struct Stack<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>>(pub [IS::W; STACK_SIZE]);
 
-impl<IS:InstructionSet> Deref for Stack<IS>where [(); IS::STACK_SIZE]: {
-    type Target = [IS::W; IS::STACK_SIZE];
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Deref for Stack<STACK_SIZE, IS> {
+    type Target = [IS::W; STACK_SIZE];
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<IS:InstructionSet> DerefMut for Stack<IS>where [(); IS::STACK_SIZE]: {
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> DerefMut for Stack<STACK_SIZE, IS> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<IS:InstructionSet> Default for Stack<IS>where [(); IS::STACK_SIZE]: {
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Default for Stack<STACK_SIZE, IS> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<IS:InstructionSet> Stack<IS>where [(); IS::STACK_SIZE]: {
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Stack<STACK_SIZE, IS> {
     /// Create a new stack with all elements initialized to the default value.
-    pub fn new() -> Self where [(); IS::STACK_SIZE]: {
-        Self([IS::W::default(); IS::STACK_SIZE])
+    pub fn new() -> Self {
+        Self([IS::W::default(); STACK_SIZE])
     }
 
     /// Read a value from the stack at the given stack pointer.

@@ -9,20 +9,19 @@ use crate::{
     stack::Word,
 };
 
-pub trait InstructionSet: Sized {
+/// Trait for implementing a instruction set that can be used by the processor.
+pub trait InstructionSet<const STACK_SIZE: usize>: Sized {
     type Instruction: Debug + Copy + Eq;
     type W: Word;
-    const STACK_SIZE: usize;
 
+    /// This function is called when an instruction is executed by the processor.
     fn execute(
         instruction: &Self::Instruction,
-        processor: &mut Processor<Self>,
-    ) -> ControlFlow<()> where [(); Self::STACK_SIZE]:;
+        processor: &mut Processor<STACK_SIZE, Self>,
+    ) -> ControlFlow<()>;
 }
 
-// TODO: Instruction set trait to implement different instruction sets
-
-/// Instruction set for the processor
+/// Default instruction set for the processor
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Instruction<W: Word, const STACK_SIZE: usize> {
     /// No operation.
@@ -61,16 +60,12 @@ pub enum Instruction<W: Word, const STACK_SIZE: usize> {
     Jump { to: W },
 }
 
-impl<W: Word, const STACK_SIZE: usize> InstructionSet for Instruction<W,STACK_SIZE> {
+impl<W: Word, const STACK_SIZE: usize> InstructionSet<STACK_SIZE> for Instruction<W, STACK_SIZE> {
     type Instruction = Self;
     type W = W;
-    const STACK_SIZE: usize = STACK_SIZE;
-    
+
     /// Execute an instruction on a processor.
-    fn execute(
-        instruction: &Self,
-        processor: &mut Processor<Self>,
-    ) -> ControlFlow<()> where [(); Self::STACK_SIZE]:{
+    fn execute(instruction: &Self, processor: &mut Processor<STACK_SIZE, Self>) -> ControlFlow<()> {
         match instruction {
             Self::End => return ControlFlow::Break(()),
             Self::Nop => (),
@@ -93,44 +88,44 @@ impl<W: Word, const STACK_SIZE: usize> InstructionSet for Instruction<W,STACK_SI
     }
 }
 
-impl<W:Word, const STACK_SIZE:usize> Instruction<W, STACK_SIZE> {
+impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
     /// Copy a value from a register to another register.
     #[inline]
-    fn move_reg(to: Register, from: Register, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn move_reg(to: Register, from: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         let val = processor.registers.get_reg(from);
         Self::move_val(to, val, processor);
     }
 
     /// Copy a value into a register.
     #[inline]
-    fn move_val(to: Register, val: W, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn move_val(to: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         processor.registers.set_reg(to, val);
     }
 
     /// Add the value of a register (rhs) to another register (acc).
     #[inline]
-    fn add_reg(acc: Register, rhs: Register, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn add_reg(acc: Register, rhs: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         let val = processor.registers.get_reg(rhs);
         Self::add_val(acc, val, processor);
     }
 
     /// Add a value to a register (acc).
     #[inline]
-    fn add_val(acc: Register, val: W, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn add_val(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         processor.registers.set_reg(acc, a + val);
     }
 
     /// Subtract the value of a register (rhs) from another register (acc).
     #[inline]
-    fn sub_reg(acc: Register, rhs: Register, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn sub_reg(acc: Register, rhs: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         let val = processor.registers.get_reg(rhs);
         Self::sub_val(acc, val, processor);
     }
 
     /// Subtract a value from a register (acc).
     #[inline]
-    fn sub_val(acc: Register, val: W, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn sub_val(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         processor.registers.set_reg(acc, a - val);
     }
@@ -138,7 +133,7 @@ impl<W:Word, const STACK_SIZE:usize> Instruction<W, STACK_SIZE> {
     /// Multiply the value of a register (rhs) with the value of another register (acc).
     /// The result is stored in acc.
     #[inline]
-    fn mul_reg(acc: Register, rhs: Register, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn mul_reg(acc: Register, rhs: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         let val = processor.registers.get_reg(rhs);
         Self::mul_val(acc, val, processor);
     }
@@ -146,7 +141,7 @@ impl<W:Word, const STACK_SIZE:usize> Instruction<W, STACK_SIZE> {
     /// Multiply a value to with the value of a register (acc).
     /// The result is stored in this register.
     #[inline]
-    fn mul_val(acc: Register, val: W, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn mul_val(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         processor.registers.set_reg(acc, a * val);
     }
@@ -154,7 +149,7 @@ impl<W:Word, const STACK_SIZE:usize> Instruction<W, STACK_SIZE> {
     /// Divide the value of a register (acc) by the value of another register (rhs).
     /// The result is stored in acc.
     #[inline]
-    fn div_reg(acc: Register, rhs: Register, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn div_reg(acc: Register, rhs: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         let val = processor.registers.get_reg(rhs);
         Self::div_val(acc, val, processor);
     }
@@ -162,26 +157,26 @@ impl<W:Word, const STACK_SIZE:usize> Instruction<W, STACK_SIZE> {
     /// Divide the value of a register (acc) by another value.
     /// The result is stored in the register.
     #[inline]
-    fn div_val(acc: Register, val: W, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn div_val(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         processor.registers.set_reg(acc, a / val);
     }
 
     /// Increment the value in a register by one.
     #[inline]
-    fn inc(reg: Register, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn inc(reg: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         processor.registers.inc(reg);
     }
 
     /// Decrement the value in a register by one.
     #[inline]
-    fn dec(reg: Register, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn dec(reg: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         processor.registers.dec(reg);
     }
 
     /// Set program counter to value, effectively jumping to the instruction at this point in the program.
     #[inline]
-    fn jmp(to: W, processor: &mut Processor<Self>) where [(); Self::STACK_SIZE]: {
+    fn jmp(to: W, processor: &mut Processor<STACK_SIZE, Self>) {
         processor.registers.set_reg(Register::PC, to);
     }
 }

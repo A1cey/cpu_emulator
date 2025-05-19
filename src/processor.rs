@@ -3,25 +3,27 @@ use thiserror::Error;
 use crate::instruction::{ExecutionError, InstructionSet};
 use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};
-use crate::stack::{Stack};
+use crate::stack::Stack;
 
 use core::ops::ControlFlow;
 
 /// Processor struct
 #[derive(Debug)]
-pub struct Processor<'a, IS: InstructionSet> where [(); IS::STACK_SIZE]:{
+pub struct Processor<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> {
     pub registers: Registers<IS::W>,
-    pub stack: Stack<IS>,
-    program: Option<&'a Program<IS>>,
+    pub stack: Stack<STACK_SIZE, IS>,
+    program: Option<&'a Program<STACK_SIZE, IS>>,
 }
 
-impl<IS: InstructionSet> Default for Processor<'_, IS>where [(); IS::STACK_SIZE]: {
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Default
+    for Processor<'_, STACK_SIZE, IS>
+{
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a, IS: InstructionSet> Processor<'a,IS> where [(); IS::STACK_SIZE]:{
+impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, STACK_SIZE, IS> {
     /// Create a new processor instance.
     #[must_use]
     pub fn new() -> Self {
@@ -33,7 +35,7 @@ impl<'a, IS: InstructionSet> Processor<'a,IS> where [(); IS::STACK_SIZE]:{
     }
 
     /// Load a program into the processor.
-    pub fn load_program(&mut self, program: &'a Program<IS>) {
+    pub fn load_program(&mut self, program: &'a Program<STACK_SIZE, IS>) {
         self.program = Some(program);
     }
 
