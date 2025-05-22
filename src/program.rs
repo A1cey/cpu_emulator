@@ -1,7 +1,7 @@
 use core::ops::Deref;
 use thiserror::Error;
 
-use crate::instruction::InstructionSet;
+use crate::instruction_set::InstructionSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[repr(transparent)]

@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::instruction::{ExecutionError, InstructionSet};
+use crate::instruction_set::{InstructionSet, default_instruction_set::ExecutionError};
 use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};
 use crate::stack::Stack;
@@ -42,7 +42,7 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     /// Run the entire program.
     ///
     /// # Errors
-    /// Returns Processor error if an error occured during execution.
+    /// Returns ProcessorError if an error occured during execution.
     pub fn run_program(&mut self) -> Result<(), ProcessorError> {
         while self.execute_next_instruction()? == ControlFlow::Continue(()) {}
         Ok(())
@@ -51,7 +51,7 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     /// Execute the current instruction in the program (where pc points to) and increment pc.
     ///
     /// # Errors
-    /// Returns Processor error if an error occured during execution.
+    /// Returns ProcessorError if an error occured during execution.
     pub fn execute_next_instruction(&mut self) -> Result<ControlFlow<()>, ProcessorError> {
         println!("{}", self.registers);
 

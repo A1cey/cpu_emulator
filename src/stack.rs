@@ -2,7 +2,7 @@ use core::fmt::{Debug, Display};
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use thiserror::Error;
 
-use crate::instruction::InstructionSet;
+use crate::instruction_set::InstructionSet;
 
 /// Marker trait for types that can be used as words in a stack.
 /// For negtive numbers a signed type must be used, e.g. i32.
@@ -82,25 +82,25 @@ macro_rules! impl_word {
 
         impl ::core::ops::AddAssign for $name {
             fn add_assign(&mut self, other: Self) {
-                *self = Self(self.0 + other.0);
+                *self = Self(self.0.wrapping_add(other.0));
             }
         }
 
         impl ::core::ops::SubAssign for $name {
             fn sub_assign(&mut self, other: Self) {
-                *self = Self(self.0 - other.0);
+                *self = Self(self.0.wrapping_sub(other.0));
             }
         }
 
         impl ::core::ops::MulAssign for $name {
             fn mul_assign(&mut self, other: Self) {
-                *self = Self(self.0 * other.0);
+                *self = Self(self.0.wrapping_mul(other.0));
             }
         }
 
         impl ::core::ops::DivAssign for $name {
             fn div_assign(&mut self, other: Self) {
-                *self = Self(self.0 / other.0);
+                *self = Self(self.0.wrapping_div(other.0));
             }
         }
 
@@ -108,7 +108,7 @@ macro_rules! impl_word {
             type Output = Self;
 
             fn add(self, rhs: Self) -> Self {
-                Self(self.0 + rhs.0)
+                Self(self.0.wrapping_add(rhs.0))
             }
         }
 
@@ -116,7 +116,7 @@ macro_rules! impl_word {
             type Output = Self;
 
             fn sub(self, rhs: Self) -> Self {
-                Self(self.0 - rhs.0)
+                Self(self.0.wrapping_sub(rhs.0))
             }
         }
 
@@ -124,7 +124,7 @@ macro_rules! impl_word {
             type Output = Self;
 
             fn mul(self, rhs: Self) -> Self {
-                Self(self.0 * rhs.0)
+                Self(self.0.wrapping_mul(rhs.0))
             }
         }
 
@@ -132,7 +132,7 @@ macro_rules! impl_word {
             type Output = Self;
 
             fn div(self, rhs: Self) -> Self {
-                Self(self.0 / rhs.0)
+                Self(self.0.wrapping_div(rhs.0))
             }
         }
     };
