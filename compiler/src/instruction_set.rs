@@ -1,11 +1,9 @@
-use crate::instruction_set::InstructionSet;
-use crate::processor::Processor;
-use crate::register::{Register, RegisterError};
-use crate::stack::Word;
+use emulator_core::instruction_set::{InstructionSet};
+use emulator_core::processor::Processor;
+use emulator_core::register::{Register};
+use emulator_core::stack::Word;
 
 use core::ops::ControlFlow;
-
-use thiserror::Error;
 
 /// Default instruction set for the processor.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -165,12 +163,6 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
     fn jmp(to: W, processor: &mut Processor<STACK_SIZE, Self>) {
         processor.registers.set_reg(Register::PC, to);
     }
-}
-
-#[derive(Debug, Error)]
-pub enum ExecutionError {
-    #[error("register error")]
-    Register(#[from] RegisterError),
 }
 
 #[cfg(test)]

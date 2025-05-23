@@ -3,7 +3,15 @@
 version = 4
 
 [[package]]
-name = "cpu_emulator"
+name = "asm_compiler"
+version = "0.1.0"
+dependencies = [
+ "emulator_core",
+ "thiserror",
+]
+
+[[package]]
+name = "emulator_core"
 version = "0.1.0"
 dependencies = [
  "thiserror",

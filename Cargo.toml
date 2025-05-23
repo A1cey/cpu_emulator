@@ -1,10 +1,8 @@
-[package]
-name = "cpu_emulator"
-version = "0.1.0"
-edition = "2024"
+[workspace]
+members=[
+    "compiler",
+    "emulator_core"
+]
 
-[dependencies]
-thiserror = "2.0.12"
+[workspace.dependencies]
 
-[lib]
-name = "cpu_emulator"

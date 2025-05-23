@@ -159,6 +159,3 @@ pub enum Flag {
     /// Carry flag
     C,
 }
-
-#[derive(Error, Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
-pub enum RegisterError {}

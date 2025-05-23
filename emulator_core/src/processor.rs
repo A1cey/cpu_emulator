@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-use crate::instruction_set::{InstructionSet, default_instruction_set::ExecutionError};
+use crate::instruction_set::InstructionSet;
 use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};
 use crate::stack::Stack;
@@ -71,6 +71,4 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
 pub enum ProcessorError {
     #[error("Program error")]
     Program(#[from] ProgramError),
-    #[error("Execution error")]
-    Execution(#[from] ExecutionError),
 }

@@ -1,9 +1,7 @@
 use core::{fmt::Debug, ops::ControlFlow};
 
 use crate::{processor::Processor, stack::Word};
-
-/// The default_instruction_set module contains the default instruction set for the processor.
-pub mod default_instruction_set;
+use thiserror::Error;
 
 /// Trait for implementing a instruction set that can be used by the processor.
 pub trait InstructionSet<const STACK_SIZE: usize>: Sized {
