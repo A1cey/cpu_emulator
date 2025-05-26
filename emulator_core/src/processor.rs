@@ -8,7 +8,7 @@ use crate::stack::Stack;
 use core::ops::ControlFlow;
 
 /// Processor struct
-#[derive(Debug)]
+#[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Processor<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> {
     pub registers: Registers<IS::W>,
     pub stack: Stack<STACK_SIZE, IS>,
@@ -67,7 +67,7 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum ProcessorError {
     #[error("Program error")]
     Program(#[from] ProgramError),

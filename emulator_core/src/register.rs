@@ -1,5 +1,4 @@
 use core::fmt::Debug;
-use thiserror::Error;
 
 use crate::stack::Word;
 

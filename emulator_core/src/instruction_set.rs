@@ -1,11 +1,10 @@
 use core::{fmt::Debug, ops::ControlFlow};
 
 use crate::{processor::Processor, stack::Word};
-use thiserror::Error;
 
 /// Trait for implementing a instruction set that can be used by the processor.
 pub trait InstructionSet<const STACK_SIZE: usize>: Sized {
-    type Instruction: Debug + Copy + Eq;
+    type Instruction: Debug + Clone + Eq;
     type W: Word;
 
     /// This function is called when an instruction is executed by the processor.

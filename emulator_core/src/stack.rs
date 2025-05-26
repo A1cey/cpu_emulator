@@ -177,7 +177,7 @@ from_i32!(ISize, isize);
 // from_word_for_usize!(ISize);
 
 /// Stack
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Stack<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>>(pub [IS::W; STACK_SIZE]);
 
@@ -231,7 +231,7 @@ impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Stack<STACK_SIZE, 
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum StackError {
     #[error("Out of bounds stack access. Stack size: {stack_size}, Stack pointer: {sp}")]
     OutOfBounds { sp: usize, stack_size: usize },

@@ -3,7 +3,7 @@ use thiserror::Error;
 
 use crate::instruction_set::InstructionSet;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default)]
+#[derive(Debug, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Program<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>>(Vec<IS::Instruction>);
 
@@ -32,7 +32,7 @@ impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Program<STACK_SIZE
     }
 }
 
-#[derive(Error, Debug)]
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum ProgramError {
     #[error("Program counter out of bounds. Program length: {program_len}, Program counter: {pc}")]
     PCOutOfBounds { pc: usize, program_len: usize },
