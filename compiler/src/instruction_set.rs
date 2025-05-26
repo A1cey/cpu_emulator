@@ -7,44 +7,44 @@ use core::ops::ControlFlow;
 
 /// Default instruction set for the processor.
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-pub enum Instruction<W: Word, const STACK_SIZE: usize> {
-    /// No operation.
+pub enum Instruction<const STACK_SIZE: usize, W: Word> {
+    /// No operation. [NOP]
     Nop,
-    /// End of program.
+    /// End of program. [END]
     End,
-    /// Copy a value from one register to another register.
+    /// Copy a value from one register to another register. [MOV]
     MoveReg { to: Register, from: Register },
-    /// Copy a value into a register.
+    /// Copy a value into a register. [MOV]
     MoveVal { to: Register, val: W },
-    /// Add the value of a register (rhs) to another register (acc).
+    /// Add the value of a register (rhs) to another register (acc). [ADD]
     AddReg { acc: Register, rhs: Register },
-    /// Add a value to a register (acc).
+    /// Add a value to a register (acc). [ADD]
     AddVal { acc: Register, val: W },
-    /// Subtract the value of a register (rhs) from another register (acc).
+    /// Subtract the value of a register (rhs) from another register (acc). [SUB]
     SubReg { acc: Register, rhs: Register },
-    /// Subtract a value from a register (acc).
+    /// Subtract a value from a register (acc). [SUB]
     SubVal { acc: Register, val: W },
     /// Multiply the value of a register (rhs) with the value of another register (acc).
-    /// The result is stored in acc.
+    /// The result is stored in acc. [MUL]
     MulReg { acc: Register, rhs: Register },
     /// Multiply a value to with the value of a register (acc).
-    /// The result is stored in this register.
+    /// The result is stored in this register. [MUL]
     MulVal { acc: Register, val: W },
     /// Divide the value of a register (acc) by the value of another register (rhs).
-    /// The result is stored in acc.
+    /// The result is stored in acc. [DIV]
     DivReg { acc: Register, rhs: Register },
     /// Divide the value of a register (acc) by another value.
-    /// The result is stored in the register.
+    /// The result is stored in the register. [DIV]
     DivVal { acc: Register, val: W },
-    /// Increment the value in a register by one.
+    /// Increment the value in a register by one. [INC]
     Inc { reg: Register },
-    /// Decrement the value in a register by one.
+    /// Decrement the value in a register by one. [DEC]
     Dec { reg: Register },
-    /// Set program pointer to value, effectively jumping to the instruction at this point in the program.
+    /// Set program pointer to value, effectively jumping to the instruction at this point in the program. [JMP]
     Jump { to: W },
 }
 
-impl<W: Word, const STACK_SIZE: usize> InstructionSet<STACK_SIZE> for Instruction<W, STACK_SIZE> {
+impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instruction< STACK_SIZE, W> {
     type Instruction = Self;
     type W = W;
 
@@ -72,7 +72,7 @@ impl<W: Word, const STACK_SIZE: usize> InstructionSet<STACK_SIZE> for Instructio
     }
 }
 
-impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
+impl<const STACK_SIZE: usize, W: Word> Instruction< STACK_SIZE, W> {
     /// Copy a value from a register to another register.
     #[inline]
     fn move_reg(to: Register, from: Register, processor: &mut Processor<STACK_SIZE, Self>) {
@@ -168,10 +168,10 @@ impl<W: Word, const STACK_SIZE: usize> Instruction<W, STACK_SIZE> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use crate::stack::*;
+    use emulator_core::stack::*;
 
     const STACK_SIZE: usize = 32;
-    type IS = Instruction<I8, STACK_SIZE>;
+    type IS = Instruction< STACK_SIZE, I8>;
 
     #[test]
     fn test_move_reg() {
