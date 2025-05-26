@@ -1,12 +1,12 @@
-use emulator_core::instruction_set::{InstructionSet};
+use emulator_core::instruction_set::InstructionSet;
 use emulator_core::processor::Processor;
-use emulator_core::register::{Register};
+use emulator_core::register::Register;
 use emulator_core::stack::Word;
 
 use core::ops::ControlFlow;
 
 /// Default instruction set for the processor.
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Instruction<const STACK_SIZE: usize, W: Word> {
     /// No operation. [NOP]
     Nop,
@@ -44,7 +44,7 @@ pub enum Instruction<const STACK_SIZE: usize, W: Word> {
     Jump { to: W },
 }
 
-impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instruction< STACK_SIZE, W> {
+impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instruction<STACK_SIZE, W> {
     type Instruction = Self;
     type W = W;
 
@@ -72,7 +72,7 @@ impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instructio
     }
 }
 
-impl<const STACK_SIZE: usize, W: Word> Instruction< STACK_SIZE, W> {
+impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
     /// Copy a value from a register to another register.
     #[inline]
     fn move_reg(to: Register, from: Register, processor: &mut Processor<STACK_SIZE, Self>) {
@@ -171,7 +171,7 @@ mod test {
     use emulator_core::stack::*;
 
     const STACK_SIZE: usize = 32;
-    type IS = Instruction< STACK_SIZE, I8>;
+    type IS = Instruction<STACK_SIZE, I8>;
 
     #[test]
     fn test_move_reg() {
