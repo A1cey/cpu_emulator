@@ -5,25 +5,35 @@ use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};
 use crate::stack::Stack;
 
-use core::ops::ControlFlow;
+use core::ops::{ControlFlow, Deref};
 
 /// Processor struct
 #[derive(Debug)]
-pub struct Processor<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> {
+pub struct Processor<'a, const STACK_SIZE: usize, IS, P>
+where
+    IS: InstructionSet<STACK_SIZE, P>,
+    P: Deref<Target = [IS::Instruction]>,
+{
     pub registers: Registers<IS::W>,
-    pub stack: Stack<STACK_SIZE, IS>,
-    program: Option<&'a Program<STACK_SIZE, IS>>,
+    pub stack: Stack<STACK_SIZE, IS, P>,
+    program: Option<&'a Program<STACK_SIZE, IS, P>>,
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Default
-    for Processor<'_, STACK_SIZE, IS>
+impl<const STACK_SIZE: usize, IS, P> Default for Processor<'_, STACK_SIZE, IS, P>
+where
+    IS: InstructionSet<STACK_SIZE, P>,
+    P: Deref<Target = [IS::Instruction]>,
 {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, STACK_SIZE, IS> {
+impl<'a, const STACK_SIZE: usize, IS, P> Processor<'a, STACK_SIZE, IS, P>
+where
+    IS: InstructionSet<STACK_SIZE, P>,
+    P: Deref<Target = [IS::Instruction]>,
+{
     /// Create a new processor instance.
     #[must_use]
     pub fn new() -> Self {
@@ -35,7 +45,7 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     }
 
     /// Load a program into the processor.
-    pub fn load_program(&mut self, program: &'a Program<STACK_SIZE, IS>) {
+    pub fn load_program(&mut self, program: &'a Program<STACK_SIZE, IS, P>) {
         self.program = Some(program);
     }
 

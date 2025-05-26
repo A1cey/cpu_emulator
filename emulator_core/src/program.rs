@@ -1,23 +1,35 @@
 use core::ops::Deref;
+use std::marker::PhantomData;
 use thiserror::Error;
 
 use crate::instruction_set::InstructionSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default)]
 #[repr(transparent)]
-pub struct Program<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>>(Vec<IS::Instruction>);
+pub struct Program<const STACK_SIZE: usize, IS, P>(P, PhantomData<IS>)
+where
+    IS: InstructionSet<STACK_SIZE, P>,
+    P: Deref<Target = [IS::Instruction]>;
 
-impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Deref for Program<STACK_SIZE, IS> {
-    type Target = Vec<IS::Instruction>;
+impl<const STACK_SIZE: usize, IS, P> Deref for Program<STACK_SIZE, IS, P>
+where
+    IS: InstructionSet<STACK_SIZE, P>,
+    P: Deref<Target = [IS::Instruction]>,
+{
+    type Target = [IS::Instruction];
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Program<STACK_SIZE, IS> {
-    pub fn new(instructions: impl IntoIterator<Item = IS::Instruction>) -> Self {
-        Self(instructions.into_iter().collect())
+impl<const STACK_SIZE: usize, IS, P> Program<STACK_SIZE, IS, P>
+where
+    IS: InstructionSet<STACK_SIZE, P>,
+    P: Deref<Target = [IS::Instruction]>,
+{
+    pub fn new(instructions: P) -> Self {
+        Self(instructions, PhantomData)
     }
 
     /// Returns instruction at the provided index.

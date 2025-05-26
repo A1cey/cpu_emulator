@@ -1,1 +1,2 @@
-fn integration_test() {}
+fn integration_test() {
+}
