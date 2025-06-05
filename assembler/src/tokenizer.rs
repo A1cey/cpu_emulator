@@ -1,49 +1,48 @@
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum Token<'a> {
+pub(crate) enum Token<'a> {
     Label(String),
     Register(String),
     Literal(Literal<'a>),
     Instruction(String),
     Comma,
+    End,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-enum Literal<'a> {
+pub(crate) enum Literal<'a> {
     Decimal(&'a str),
     Binary(&'a str),
-    Hexadecimal(String),
+    Hexadecimal(&'a str),
     Octal(&'a str),
     Boolean(bool),
     String(&'a str),
     Char(char),
 }
 
-struct Tokenizer<'a> {
+pub(crate) struct Tokenizer<'a> {
     tokens: Vec<Token<'a>>,
     curr_idx: usize,
     token_start_idx: usize,
     input: &'a str,
     input_len: usize,
-    is_done: bool,
     errors: Option<Vec<TokenizerError>>,
 }
 
 impl Tokenizer<'_> {
-    fn from(input: &str) -> Tokenizer {
+    const fn from(input: &str) -> Tokenizer {
         Tokenizer {
             tokens: Vec::new(),
             curr_idx: 0,
             token_start_idx: 0,
             input,
             input_len: input.len(),
-            is_done: false,
             errors: None,
         }
     }
 
-    pub fn tokenize(input: &str) -> Result<Vec<Token>, Vec<TokenizerError>> {
+    pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, Vec<TokenizerError>> {
         let mut tokenizer = Tokenizer::from(input);
 
         tokenizer.run();
@@ -57,7 +56,7 @@ impl Tokenizer<'_> {
     fn run(&mut self) {
         while self.curr_idx < self.input_len {
             self.token_start_idx = self.curr_idx;
-            
+
             match self.get_curr_char() {
                 '.' => self.expect_label(),
                 'R' => self.expect_register(),
@@ -72,21 +71,19 @@ impl Tokenizer<'_> {
                         idx: self.curr_idx,
                     });
                 }
-            };
+            }
         }
     }
 
+    #[inline]
     fn add_error(&mut self, err: TokenizerError) {
-        self.errors.get_or_insert_default().push(err)
+        self.errors.get_or_insert_default().push(err);
     }
 
     fn get_curr_char(&self) -> char {
-        match self.input.chars().nth(self.curr_idx) {
-            Some(c) => c.to_uppercase().next().expect("Not a valid character."),
-            None => unreachable!(
-                "The index should not be greater or equal to the length of the input. This should never happen."
-            ),
-        }
+        self.input.chars().nth(self.curr_idx).map_or_else(||unreachable!(
+            "The index should not be greater or equal to the length of the input. This should never happen."
+        ), |c|c.to_uppercase().next().expect("Not a valid character."))
     }
 
     fn set_curr_idx_to_token_end(&mut self) {
@@ -110,7 +107,7 @@ impl Tokenizer<'_> {
 
         self.tokens.push(Token::Label(
             self.input[self.token_start_idx..self.curr_idx].to_uppercase(),
-        ))
+        ));
     }
 
     fn expect_instruction(&mut self) {
@@ -120,9 +117,15 @@ impl Tokenizer<'_> {
             self.curr_idx += 1;
         }
 
-        self.tokens.push(Token::Instruction(
-            self.input[self.token_start_idx..self.curr_idx].to_uppercase(),
-        ));
+        let inst = self.input[self.token_start_idx..self.curr_idx].to_uppercase();
+
+        let token = if inst == "END" {
+            Token::End
+        } else {
+            Token::Instruction(inst)
+        };
+
+        self.tokens.push(token);
     }
 
     fn expect_register(&mut self) {
@@ -153,8 +156,8 @@ impl Tokenizer<'_> {
             'F' => self.expect_boolean_false_literal(),
             _ => self.add_error(TokenizerError::InvalidLiteral { idx: self.curr_idx }),
         }
-        
-        self.curr_idx +=1;
+
+        self.curr_idx += 1;
     }
 
     fn expect_char_literal(&mut self) {
@@ -183,7 +186,6 @@ impl Tokenizer<'_> {
         )));
     }
 
-    // TODO:  fix curr_idx end state
     fn expect_numeric_literal(&mut self) {
         let literal = if self.get_curr_char() == '0' {
             self.curr_idx += 1;
@@ -195,7 +197,7 @@ impl Tokenizer<'_> {
                 }
                 'X' => {
                     self.set_curr_idx_to_token_end();
-                    Literal::Hexadecimal(self.input[self.token_start_idx + 1..=self.curr_idx].to_uppercase())
+                    Literal::Hexadecimal(&self.input[self.token_start_idx + 1..=self.curr_idx])
                 }
                 'O' => {
                     self.set_curr_idx_to_token_end();
@@ -249,8 +251,8 @@ impl Tokenizer<'_> {
     }
 }
 
-#[derive(Error, Debug, Clone, PartialEq, Eq, Hash)]
-enum TokenizerError {
+#[derive(Error, Debug, Clone, PartialEq, Eq)]
+pub enum TokenizerError {
     #[error("Token at idx {idx} is not allowed to start with {start}. ")]
     InvalidTokenStart { start: char, idx: usize },
     #[error("Invalid literal at idx: {idx}.")]
@@ -295,7 +297,7 @@ mod test {
                 Token::Instruction("MOV".into()),
                 Token::Register("R256".into()),
                 Token::Comma,
-                Token::Literal(Literal::Hexadecimal("BC2A".into())),
+                Token::Literal(Literal::Hexadecimal("Bc2a".into())),
                 Token::Instruction("MUL".into()),
                 Token::Register("R0".into()),
                 Token::Comma,
@@ -312,7 +314,7 @@ mod test {
         let err = TokenizerError::InvalidTokenStart { start: ' ', idx: 0 };
         assert!(t.errors.is_none());
         t.add_error(err.clone());
-        assert_eq!(t.errors.unwrap(), vec![err]);
+        assert_eq!(t.errors.unwrap(), vec![err.into()]);
     }
 
     #[test]
@@ -374,7 +376,10 @@ mod test {
         assert_eq!(t.tokens[0], Token::Literal(Literal::Decimal("42")));
         let mut t = Tokenizer::from("#0x4H");
         t.expect_literal();
-        assert_eq!(t.tokens[0], Token::Literal(Literal::Hexadecimal("4H".into())));
+        assert_eq!(
+            t.tokens[0],
+            Token::Literal(Literal::Hexadecimal("4H".into()))
+        );
         let mut t = Tokenizer::from("#0b010110");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Binary("010110")));
@@ -424,7 +429,10 @@ mod test {
         assert_eq!(t.tokens[0], Token::Literal(Literal::Decimal("42")));
         let mut t = Tokenizer::from("#0x4H");
         t.expect_literal();
-        assert_eq!(t.tokens[0], Token::Literal(Literal::Hexadecimal("4H".into())));
+        assert_eq!(
+            t.tokens[0],
+            Token::Literal(Literal::Hexadecimal("4H".into()))
+        );
         let mut t = Tokenizer::from("#0b010110");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Binary("010110")));

@@ -1,8 +1,8 @@
 [workspace]
 members=[
-    "compiler",
+    "assembler",
     "emulator_core"
 ]
 
 [workspace.dependencies]
-
+thiserror = "2.0.12"

@@ -1,14 +1,14 @@
 [package]
-name = "asm_compiler"
+name = "assembler"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 emulator_core = {path = "../emulator_core"}
-thiserror = "2.0.12"
+thiserror = {workspace = true}
 
 [lib]
-name = "asm_compiler"
+name = "assembler"
 
 [[bin]]
 name = "asmc"

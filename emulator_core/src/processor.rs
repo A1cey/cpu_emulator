@@ -5,8 +5,6 @@ use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};
 use crate::stack::Stack;
 
-use core::ops::ControlFlow;
-
 /// Processor struct
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Processor<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> {
@@ -44,27 +42,35 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     /// # Errors
     /// Returns ProcessorError if an error occured during execution.
     pub fn run_program(&mut self) -> Result<(), ProcessorError> {
-        while self.execute_next_instruction()? == ControlFlow::Continue(()) {}
-        Ok(())
+        loop {
+            self.execute_next_instruction()?
+        }
     }
 
     /// Execute the current instruction in the program (where pc points to) and increment pc.
     ///
     /// # Errors
     /// Returns ProcessorError if an error occured during execution.
-    pub fn execute_next_instruction(&mut self) -> Result<ControlFlow<()>, ProcessorError> {
+    pub fn execute_next_instruction(&mut self) -> Result<(), ProcessorError> {
         println!("{}", self.registers);
 
         let program = self.program.ok_or(ProgramError::NoProgramLoaded)?;
 
         let instruction = program.get_instruction(self.registers.pc.into())?;
 
-        let res = IS::execute(instruction, self);
+        if IS::execute(instruction, self) == PCAutoIncrement::Active {
+            self.registers.inc(Register::PC);
+        }
 
-        self.registers.inc(Register::PC);
-
-        Ok(res)
+        Ok(())
     }
+}
+
+/// Control enum for auto incrementing of PC after instruction execution.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum PCAutoIncrement {
+    Active,
+    Inactive,
 }
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]

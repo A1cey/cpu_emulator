@@ -1,4 +1,6 @@
 use core::fmt::Debug;
+use core::str::FromStr;
+use thiserror::Error;
 
 use crate::stack::Word;
 
@@ -141,6 +143,20 @@ macro_rules! def_registers {
             PC,
             SP,
         }
+
+        impl FromStr for Register {
+            type Err = RegisterError;
+            fn from_str(value: &str) -> Result<Self, Self::Err> {
+                match value{
+                    $(
+                    stringify!($register) => Ok(Register::$register),
+                    )*
+                    "PC" => Ok(Register::PC),
+                    "SP" => Ok(Register::SP),
+                    _ => Err(RegisterError::ConversionFailed{input: value.to_string()})
+                }
+            }
+        }
     };
 }
 
@@ -157,4 +173,10 @@ pub enum Flag {
     O,
     /// Carry flag
     C,
+}
+
+#[derive(Debug, Error, Clone, PartialEq, Eq, Hash)]
+pub enum RegisterError {
+    #[error("Failed to convert {input} into a register.")]
+    ConversionFailed { input: String },
 }

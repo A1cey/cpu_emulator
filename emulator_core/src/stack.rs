@@ -1,4 +1,5 @@
 use core::fmt::{Debug, Display};
+use core::num::ParseIntError;
 use core::ops::{Add, AddAssign, Deref, DerefMut, Div, DivAssign, Mul, MulAssign, Sub, SubAssign};
 use thiserror::Error;
 
@@ -23,6 +24,7 @@ pub trait Word:
     + MulAssign
     + DivAssign
 {
+    fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError>;
 }
 
 /// This macro is used to implement the From<i32> trait.
@@ -57,7 +59,12 @@ macro_rules! impl_word {
         #[repr(transparent)]
         pub struct $name($type);
 
-        impl Word for $name {}
+        impl Word for $name {
+            /// Custom parsing function that takes a radix.
+            fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError> {
+                <$type>::from_str_radix(s, radix).map($name)
+            }
+        }
 
         impl ::core::fmt::Display for $name {
             fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> Result<(), ::core::fmt::Error> {

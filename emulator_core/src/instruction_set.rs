@@ -1,6 +1,9 @@
-use core::{fmt::Debug, ops::ControlFlow};
+use core::fmt::Debug;
 
-use crate::{processor::Processor, stack::Word};
+use crate::{
+    processor::{PCAutoIncrement, Processor},
+    stack::Word,
+};
 
 /// Trait for implementing a instruction set that can be used by the processor.
 pub trait InstructionSet<const STACK_SIZE: usize>: Sized {
@@ -11,5 +14,5 @@ pub trait InstructionSet<const STACK_SIZE: usize>: Sized {
     fn execute(
         instruction: &Self::Instruction,
         processor: &mut Processor<STACK_SIZE, Self>,
-    ) -> ControlFlow<()>;
+    ) -> PCAutoIncrement;
 }

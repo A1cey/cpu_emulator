@@ -1,17 +1,28 @@
 use emulator_core::instruction_set::InstructionSet;
-use emulator_core::processor::Processor;
+use emulator_core::processor::{PCAutoIncrement, Processor};
 use emulator_core::register::Register;
 use emulator_core::stack::Word;
 
-use core::ops::ControlFlow;
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub(crate) enum ASMBinaryInstruction {
+    Mov,
+    Add,
+    Sub,
+    Div,
+    Mul,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+pub(crate) enum ASMUnaryInstruction {
+    Inc,
+    Dec,
+}
 
 /// Default instruction set for the processor.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Instruction<const STACK_SIZE: usize, W: Word> {
     /// No operation. [NOP]
     Nop,
-    /// End of program. [END]
-    End,
     /// Copy a value from one register to another register. [MOV]
     MoveReg { to: Register, from: Register },
     /// Copy a value into a register. [MOV]
@@ -49,9 +60,8 @@ impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instructio
     type W = W;
 
     /// Execute an instruction on a processor.
-    fn execute(instruction: &Self, processor: &mut Processor<STACK_SIZE, Self>) -> ControlFlow<()> {
+    fn execute(instruction: &Self, processor: &mut Processor<STACK_SIZE, Self>) -> PCAutoIncrement {
         match instruction {
-            Self::End => return ControlFlow::Break(()),
             Self::Nop => (),
             Self::MoveReg { to, from } => Self::move_reg(*to, *from, processor),
             Self::MoveVal { to, val } => Self::move_val(*to, *val, processor),
@@ -65,14 +75,48 @@ impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instructio
             Self::DivVal { acc, val } => Self::div_val(*acc, *val, processor),
             Self::Inc { reg } => Self::inc(*reg, processor),
             Self::Dec { reg } => Self::dec(*reg, processor),
-            Self::Jump { to } => Self::jmp(*to, processor),
-        };
+            Self::Jump { to } => {
+                Self::jmp(*to, processor);
+                return PCAutoIncrement::Inactive;
+            }
+        }
 
-        ControlFlow::Continue(())
+        PCAutoIncrement::Active
     }
 }
 
 impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
+    pub(crate) fn from_binary_reg_instr(
+        inst: ASMBinaryInstruction,
+        lhs: Register,
+        rhs: Register,
+    ) -> Self {
+        match inst {
+            ASMBinaryInstruction::Mov => Instruction::MoveReg { to: lhs, from: rhs },
+            ASMBinaryInstruction::Add => Instruction::AddReg { acc: lhs, rhs },
+            ASMBinaryInstruction::Sub => Instruction::SubReg { acc: lhs, rhs },
+            ASMBinaryInstruction::Mul => Instruction::MulReg { acc: lhs, rhs },
+            ASMBinaryInstruction::Div => Instruction::DivReg { acc: lhs, rhs },
+        }
+    }
+
+    pub(crate) fn from_binary_val_instr(inst: ASMBinaryInstruction, lhs: Register, val: W) -> Self {
+        match inst {
+            ASMBinaryInstruction::Mov => Instruction::MoveVal { to: lhs, val },
+            ASMBinaryInstruction::Add => Instruction::AddVal { acc: lhs, val },
+            ASMBinaryInstruction::Sub => Instruction::SubVal { acc: lhs, val },
+            ASMBinaryInstruction::Mul => Instruction::MulVal { acc: lhs, val },
+            ASMBinaryInstruction::Div => Instruction::DivVal { acc: lhs, val },
+        }
+    }
+
+    pub(crate) fn from_unary_instr(inst: ASMUnaryInstruction, reg: Register) -> Self {
+        match inst {
+            ASMUnaryInstruction::Inc => Instruction::Inc { reg },
+            ASMUnaryInstruction::Dec => Instruction::Dec { reg },
+        }
+    }
+
     /// Copy a value from a register to another register.
     #[inline]
     fn move_reg(to: Register, from: Register, processor: &mut Processor<STACK_SIZE, Self>) {
