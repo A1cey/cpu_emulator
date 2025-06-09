@@ -33,24 +33,24 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     }
 
     /// Load a program into the processor.
-    pub fn load_program(&mut self, program: &'a Program<STACK_SIZE, IS>) {
+    pub const fn load_program(&mut self, program: &'a Program<STACK_SIZE, IS>) {
         self.program = Some(program);
     }
 
     /// Run the entire program.
     ///
     /// # Errors
-    /// Returns ProcessorError if an error occured during execution.
+    /// Returns `ProcessorError` if an error occured during execution.
     pub fn run_program(&mut self) -> Result<(), ProcessorError> {
         loop {
-            self.execute_next_instruction()?
+            self.execute_next_instruction()?;
         }
     }
 
-    /// Execute the current instruction in the program (where pc points to) and increment pc.
+    /// Fetches the current instruction (where pc points to), increments the pc and then executes the instruction.
     ///
     /// # Errors
-    /// Returns ProcessorError if an error occured during execution.
+    /// Returns `ProcessorError` if an error occured during execution.
     pub fn execute_next_instruction(&mut self) -> Result<(), ProcessorError> {
         println!("{}", self.registers);
 
@@ -58,19 +58,12 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
 
         let instruction = program.get_instruction(self.registers.pc.into())?;
 
-        if IS::execute(instruction, self) == PCAutoIncrement::Active {
-            self.registers.inc(Register::PC);
-        }
+        self.registers.inc(Register::PC);
+
+        IS::execute(instruction, self);
 
         Ok(())
     }
-}
-
-/// Control enum for auto incrementing of PC after instruction execution.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum PCAutoIncrement {
-    Active,
-    Inactive,
 }
 
 #[derive(Error, Debug, Clone, PartialEq, Eq)]

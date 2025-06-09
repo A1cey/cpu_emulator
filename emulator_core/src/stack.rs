@@ -24,6 +24,10 @@ pub trait Word:
     + MulAssign
     + DivAssign
 {
+    /// This is a wrapper around the `from_str_radix` function that is implemented for all of Rust's numeric types.
+    ///
+    /// # Errors
+    /// Returns `ParseIntError` when the parsing failed.
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError>;
 }
 
@@ -41,17 +45,6 @@ macro_rules! from_i32 {
     };
 }
 
-// /// This macro is used to implement From<_> for usize for the Word variants.
-// macro_rules! from_word_for_usize {
-//     ($name: ident $(,)? ) => {
-//         impl ::core::convert::From<$name> for usize {
-//             fn from(value: $name) -> usize {
-//                 value.0 as usize
-//             }
-//         }
-//     };
-// }
-
 /// This macro can be used to implement the Word trait for a Wrapper struct around another type like u8.
 macro_rules! impl_word {
     ($name: ident, $type: ty $(,)? ) => {
@@ -60,7 +53,10 @@ macro_rules! impl_word {
         pub struct $name($type);
 
         impl Word for $name {
-            /// Custom parsing function that takes a radix.
+            /// This is a wrapper around the `from_str_radix` function that is implemented for all of Rust's numeric types.
+            ///
+            /// # Errors
+            /// Returns `ParseIntError` when the parsing failed.
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError> {
                 <$type>::from_str_radix(s, radix).map($name)
             }
@@ -210,6 +206,7 @@ impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Default for Stack<
 
 impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Stack<STACK_SIZE, IS> {
     /// Create a new stack with all elements initialized to the default value.
+    #[must_use]
     pub fn new() -> Self {
         Self([IS::W::default(); STACK_SIZE])
     }

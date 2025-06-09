@@ -1,9 +1,6 @@
 use core::fmt::Debug;
 
-use crate::{
-    processor::{PCAutoIncrement, Processor},
-    stack::Word,
-};
+use crate::{processor::Processor, stack::Word};
 
 /// Trait for implementing a instruction set that can be used by the processor.
 pub trait InstructionSet<const STACK_SIZE: usize>: Sized {
@@ -11,8 +8,5 @@ pub trait InstructionSet<const STACK_SIZE: usize>: Sized {
     type W: Word;
 
     /// This function is called when an instruction is executed by the processor.
-    fn execute(
-        instruction: &Self::Instruction,
-        processor: &mut Processor<STACK_SIZE, Self>,
-    ) -> PCAutoIncrement;
+    fn execute(instruction: &Self::Instruction, processor: &mut Processor<STACK_SIZE, Self>);
 }
