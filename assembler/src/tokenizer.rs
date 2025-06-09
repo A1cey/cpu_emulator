@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Token<'a> {
+pub enum Token<'a> {
     Label(String),
     Register(String),
     Literal(Literal<'a>),
@@ -11,7 +11,7 @@ pub(crate) enum Token<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub(crate) enum Literal<'a> {
+pub enum Literal<'a> {
     Decimal(&'a str),
     Binary(&'a str),
     Hexadecimal(&'a str),
@@ -21,7 +21,7 @@ pub(crate) enum Literal<'a> {
     Char(char),
 }
 
-pub(crate) struct Tokenizer<'a> {
+pub struct Tokenizer<'a> {
     tokens: Vec<Token<'a>>,
     curr_idx: usize,
     token_start_idx: usize,
@@ -66,7 +66,7 @@ impl Tokenizer<'_> {
                 c if c.is_whitespace() => self.curr_idx += 1,
                 c => {
                     self.curr_idx += 1;
-                    self.add_error(TokenizerError::InvalidTokenStart {
+                    self.add_error(TokenizerError::TokenStart {
                         start: c,
                         idx: self.curr_idx,
                     });
@@ -154,7 +154,7 @@ impl Tokenizer<'_> {
             c if c.is_numeric() => self.expect_numeric_literal(),
             'T' => self.expect_boolean_true_literal(),
             'F' => self.expect_boolean_false_literal(),
-            _ => self.add_error(TokenizerError::InvalidLiteral { idx: self.curr_idx }),
+            _ => self.add_error(TokenizerError::Literal { idx: self.curr_idx }),
         }
 
         self.curr_idx += 1;
@@ -169,7 +169,7 @@ impl Tokenizer<'_> {
 
         match self.get_curr_char() {
             '\'' => self.tokens.push(Token::Literal(Literal::Char(c))),
-            _ => self.add_error(TokenizerError::InvalidCharLiteral { idx: self.curr_idx }),
+            _ => self.add_error(TokenizerError::CharLiteral { idx: self.curr_idx }),
         }
     }
 
@@ -229,7 +229,7 @@ impl Tokenizer<'_> {
             .as_str()
         {
             "TRUE" => self.tokens.push(Token::Literal(Literal::Boolean(true))),
-            _ => self.add_error(TokenizerError::InvalidBooleanTrueLiteral {
+            _ => self.add_error(TokenizerError::BooleanTrueLiteral {
                 idx: self.token_start_idx,
             }),
         }
@@ -244,7 +244,7 @@ impl Tokenizer<'_> {
             .as_str()
         {
             "FALSE" => self.tokens.push(Token::Literal(Literal::Boolean(false))),
-            _ => self.add_error(TokenizerError::InvalidBooleanFalseLiteral {
+            _ => self.add_error(TokenizerError::BooleanFalseLiteral {
                 idx: self.token_start_idx,
             }),
         }
@@ -254,15 +254,15 @@ impl Tokenizer<'_> {
 #[derive(Error, Debug, Clone, PartialEq, Eq)]
 pub enum TokenizerError {
     #[error("Token at idx {idx} is not allowed to start with {start}. ")]
-    InvalidTokenStart { start: char, idx: usize },
+    TokenStart { start: char, idx: usize },
     #[error("Invalid literal at idx: {idx}.")]
-    InvalidLiteral { idx: usize },
+    Literal { idx: usize },
     #[error("Expected char literal at idx {idx} to end with \'.")]
-    InvalidCharLiteral { idx: usize },
+    CharLiteral { idx: usize },
     #[error("Expected boolean literal TRUE/true at idx {idx}.")]
-    InvalidBooleanTrueLiteral { idx: usize },
+    BooleanTrueLiteral { idx: usize },
     #[error("Expected boolean literal FALSE/false at idx {idx}.")]
-    InvalidBooleanFalseLiteral { idx: usize },
+    BooleanFalseLiteral { idx: usize },
 }
 
 #[cfg(test)]
@@ -311,7 +311,7 @@ mod test {
     #[test]
     fn test_add_error() {
         let mut t = Tokenizer::from("");
-        let err = TokenizerError::InvalidTokenStart { start: ' ', idx: 0 };
+        let err = TokenizerError::TokenStart { start: ' ', idx: 0 };
         assert!(t.errors.is_none());
         t.add_error(err.clone());
         assert_eq!(t.errors.unwrap(), vec![err.into()]);

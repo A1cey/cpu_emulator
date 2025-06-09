@@ -1,9 +1,9 @@
 use emulator_core::instruction_set::InstructionSet;
-use emulator_core::processor::{PCAutoIncrement, Processor};
+use emulator_core::processor::Processor;
 use emulator_core::register::Register;
 use emulator_core::stack::Word;
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub(crate) enum ASMBinaryInstruction {
     Mov,
     Add,
@@ -12,7 +12,7 @@ pub(crate) enum ASMBinaryInstruction {
     Mul,
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub(crate) enum ASMUnaryInstruction {
     Inc,
     Dec,
@@ -60,7 +60,7 @@ impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instructio
     type W = W;
 
     /// Execute an instruction on a processor.
-    fn execute(instruction: &Self, processor: &mut Processor<STACK_SIZE, Self>) -> PCAutoIncrement {
+    fn execute(instruction: &Self, processor: &mut Processor<STACK_SIZE, Self>) {
         match instruction {
             Self::Nop => (),
             Self::MoveReg { to, from } => Self::move_reg(*to, *from, processor),
@@ -75,58 +75,57 @@ impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instructio
             Self::DivVal { acc, val } => Self::div_val(*acc, *val, processor),
             Self::Inc { reg } => Self::inc(*reg, processor),
             Self::Dec { reg } => Self::dec(*reg, processor),
-            Self::Jump { to } => {
-                Self::jmp(*to, processor);
-                return PCAutoIncrement::Inactive;
-            }
+            Self::Jump { to } => Self::jmp(*to, processor),
         }
-
-        PCAutoIncrement::Active
     }
 }
 
 impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
-    pub(crate) fn from_binary_reg_instr(
+    pub(crate) const fn from_binary_reg_instr(
         inst: ASMBinaryInstruction,
         lhs: Register,
         rhs: Register,
     ) -> Self {
         match inst {
-            ASMBinaryInstruction::Mov => Instruction::MoveReg { to: lhs, from: rhs },
-            ASMBinaryInstruction::Add => Instruction::AddReg { acc: lhs, rhs },
-            ASMBinaryInstruction::Sub => Instruction::SubReg { acc: lhs, rhs },
-            ASMBinaryInstruction::Mul => Instruction::MulReg { acc: lhs, rhs },
-            ASMBinaryInstruction::Div => Instruction::DivReg { acc: lhs, rhs },
+            ASMBinaryInstruction::Mov => Self::MoveReg { to: lhs, from: rhs },
+            ASMBinaryInstruction::Add => Self::AddReg { acc: lhs, rhs },
+            ASMBinaryInstruction::Sub => Self::SubReg { acc: lhs, rhs },
+            ASMBinaryInstruction::Mul => Self::MulReg { acc: lhs, rhs },
+            ASMBinaryInstruction::Div => Self::DivReg { acc: lhs, rhs },
         }
     }
 
-    pub(crate) fn from_binary_val_instr(inst: ASMBinaryInstruction, lhs: Register, val: W) -> Self {
+    pub(crate) const fn from_binary_val_instr(
+        inst: ASMBinaryInstruction,
+        lhs: Register,
+        val: W,
+    ) -> Self {
         match inst {
-            ASMBinaryInstruction::Mov => Instruction::MoveVal { to: lhs, val },
-            ASMBinaryInstruction::Add => Instruction::AddVal { acc: lhs, val },
-            ASMBinaryInstruction::Sub => Instruction::SubVal { acc: lhs, val },
-            ASMBinaryInstruction::Mul => Instruction::MulVal { acc: lhs, val },
-            ASMBinaryInstruction::Div => Instruction::DivVal { acc: lhs, val },
+            ASMBinaryInstruction::Mov => Self::MoveVal { to: lhs, val },
+            ASMBinaryInstruction::Add => Self::AddVal { acc: lhs, val },
+            ASMBinaryInstruction::Sub => Self::SubVal { acc: lhs, val },
+            ASMBinaryInstruction::Mul => Self::MulVal { acc: lhs, val },
+            ASMBinaryInstruction::Div => Self::DivVal { acc: lhs, val },
         }
     }
 
-    pub(crate) fn from_unary_instr(inst: ASMUnaryInstruction, reg: Register) -> Self {
+    pub(crate) const fn from_unary_instr(inst: ASMUnaryInstruction, reg: Register) -> Self {
         match inst {
-            ASMUnaryInstruction::Inc => Instruction::Inc { reg },
-            ASMUnaryInstruction::Dec => Instruction::Dec { reg },
+            ASMUnaryInstruction::Inc => Self::Inc { reg },
+            ASMUnaryInstruction::Dec => Self::Dec { reg },
         }
     }
 
     /// Copy a value from a register to another register.
     #[inline]
-    fn move_reg(to: Register, from: Register, processor: &mut Processor<STACK_SIZE, Self>) {
+    const fn move_reg(to: Register, from: Register, processor: &mut Processor<STACK_SIZE, Self>) {
         let val = processor.registers.get_reg(from);
         Self::move_val(to, val, processor);
     }
 
     /// Copy a value into a register.
     #[inline]
-    fn move_val(to: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
+    const fn move_val(to: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         processor.registers.set_reg(to, val);
     }
 
@@ -204,7 +203,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 
     /// Set program counter to value, effectively jumping to the instruction at this point in the program.
     #[inline]
-    fn jmp(to: W, processor: &mut Processor<STACK_SIZE, Self>) {
+    const fn jmp(to: W, processor: &mut Processor<STACK_SIZE, Self>) {
         processor.registers.set_reg(Register::PC, to);
     }
 }

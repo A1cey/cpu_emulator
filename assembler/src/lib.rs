@@ -9,7 +9,10 @@ pub mod instruction_set;
 mod parser;
 mod tokenizer;
 
-#[must_use]
+/// Assembles Program from Assembly Code.
+///
+/// # Errors
+/// Returns a vector of all errors that a happened during either the tokenizing or the parsing.
 pub fn assemble<const STACK_SIZE: usize, W: Word>(
     input: impl AsRef<str>,
 ) -> Result<Program<STACK_SIZE, Instruction<STACK_SIZE, W>>, Vec<AssemblerError>> {

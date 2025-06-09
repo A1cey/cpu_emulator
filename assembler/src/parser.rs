@@ -1,5 +1,5 @@
 use core::num::ParseIntError;
-use std::collections::HashMap;
+use std::{collections::HashMap, num::TryFromIntError};
 
 use emulator_core::{
     program::Program,
@@ -14,7 +14,7 @@ use crate::{
 };
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub(crate) struct Parser<'a, const STACK_SIZE: usize, W: Word> {
+pub struct Parser<'a, const STACK_SIZE: usize, W: Word> {
     tokens: &'a [Token<'a>],
     instructions: Vec<Instruction<STACK_SIZE, W>>,
     errors: Option<Vec<ParserError>>,
@@ -28,9 +28,9 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         Self {
             tokens,
             errors: None,
-            instructions: Default::default(),
+            instructions: Vec::default(),
             idx: 0,
-            labels: Default::default(),
+            labels: HashMap::default(),
             is_done: false,
         }
     }
@@ -52,7 +52,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
             match self.tokens.get(self.idx) {
                 Some(token) => match token {
                     Token::Label(label) => {
-                        if let Some(old_idx) = self.labels.insert(&label, self.idx) {
+                        if let Some(old_idx) = self.labels.insert(label, self.idx) {
                             self.add_error(ParserError::DuplicateLabel {
                                 idx: self.idx,
                                 old_idx,
@@ -102,24 +102,24 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
 
         match self.tokens.get(self.idx) {
             Some(Token::Label(label)) => match self.labels.get(label.as_str()) {
-                Some(idx) => self.instructions.push(Instruction::Jump {
-                    to: (*idx as i32).into(),
-                }),
+                Some(idx) => match i32::try_from(*idx) {
+                    Ok(dest) => self
+                        .instructions
+                        .push(Instruction::Jump { to: dest.into() }),
+                    Err(err) => self.add_error(ParserError::JumpDestinationTooLarge(err)),
+                },
                 None => self.add_error(ParserError::LabelNotFound {
                     idx: self.idx,
                     label: label.clone(),
                 }),
             },
             token => {
-                let token_str = match token {
-                    Some(token) => format!("{:?}", token),
-                    None => String::new(),
-                };
+                let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
                 self.add_error(ParserError::InvalidToken {
                     idx: self.idx,
                     expected: "Label",
                     got: token_str,
-                })
+                });
             }
         }
     }
@@ -128,9 +128,9 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         match self.get_next() {
             Token::Register(reg) => reg
                 .parse::<Register>()
-                .map_err(|err| ParserError::RegisterParsing(err)),
+                .map_err(ParserError::RegisterParsing),
             token => {
-                let token_str = format!("{:?}", token);
+                let token_str = format!("{token:?}");
                 Err(ParserError::InvalidToken {
                     idx: self.idx,
                     expected: "Register",
@@ -146,22 +146,16 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         self.tokens.get(self.idx).unwrap_or(&Token::End)
     }
 
-    fn convert_lit_to_val(&self, lit: &Literal<'_>) -> Result<W, ParserError> {
+    fn convert_lit_to_val(lit: &Literal<'_>) -> Result<W, ParserError> {
         match lit {
             Literal::Char(s) => Ok((*s as i32).into()),
-            Literal::Binary(s) => {
-                W::from_str_radix(s, 2).map_err(|err| ParserError::LiteralParsing(err))
-            }
-            Literal::Boolean(s) => Ok((if *s { 1 } else { 0 }).into()),
-            Literal::Decimal(s) => {
-                W::from_str_radix(s, 10).map_err(|err| ParserError::LiteralParsing(err))
-            }
+            Literal::Binary(s) => W::from_str_radix(s, 2).map_err(ParserError::LiteralParsing),
+            Literal::Boolean(s) => Ok(i32::from(*s).into()),
+            Literal::Decimal(s) => W::from_str_radix(s, 10).map_err(ParserError::LiteralParsing),
             Literal::Hexadecimal(s) => {
-                W::from_str_radix(s, 16).map_err(|err| ParserError::LiteralParsing(err))
+                W::from_str_radix(s, 16).map_err(ParserError::LiteralParsing)
             }
-            Literal::Octal(s) => {
-                W::from_str_radix(s, 8).map_err(|err| ParserError::LiteralParsing(err))
-            }
+            Literal::Octal(s) => W::from_str_radix(s, 8).map_err(ParserError::LiteralParsing),
             Literal::String(_) => Err(ParserError::CannotConvertStrToVal),
         }
     }
@@ -178,15 +172,12 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         match self.tokens.get(self.idx) {
             Some(Token::Comma) => {}
             token => {
-                let token_str = match token {
-                    Some(token) => format!("{:?}", token),
-                    None => String::new(),
-                };
+                let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
                 self.add_error(ParserError::InvalidToken {
                     idx: self.idx,
                     expected: "Comma",
                     got: token_str,
-                })
+                });
             }
         }
 
@@ -200,10 +191,10 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
                     }
                 };
                 self.instructions
-                    .push(Instruction::from_binary_reg_instr(inst, acc, rhs))
+                    .push(Instruction::from_binary_reg_instr(inst, acc, rhs));
             }
             Some(Token::Literal(lit)) => {
-                let val = match self.convert_lit_to_val(lit) {
+                let val = match Self::convert_lit_to_val(lit) {
                     Ok(val) => val,
                     Err(err) => {
                         return self.add_error(err);
@@ -211,18 +202,15 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
                 };
 
                 self.instructions
-                    .push(Instruction::from_binary_val_instr(inst, acc, val))
+                    .push(Instruction::from_binary_val_instr(inst, acc, val));
             }
             token => {
-                let token_str = match token {
-                    Some(token) => format!("{:?}", token),
-                    None => String::new(),
-                };
+                let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
                 self.add_error(ParserError::InvalidToken {
                     idx: self.idx,
                     expected: "Register or Literal",
                     got: token_str,
-                })
+                });
             }
         }
     }
@@ -264,4 +252,9 @@ pub enum ParserError {
     CannotConvertStrToVal,
     #[error("Label \".{label}\" not found. Needed at {idx}.")]
     LabelNotFound { idx: usize, label: String },
+    #[error(
+        "There are too many labels in this program (only {} allowed).",
+        i32::MAX
+    )]
+    JumpDestinationTooLarge(#[from] TryFromIntError),
 }
