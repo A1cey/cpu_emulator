@@ -56,7 +56,7 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
 
         let program = self.program.ok_or(ProgramError::NoProgramLoaded)?;
 
-        let instruction = program.get_instruction(self.registers.pc.into())?;
+        let instruction = program.fetch_instruction(self.registers.pc.into())?;
 
         self.registers.inc(Register::PC);
 
