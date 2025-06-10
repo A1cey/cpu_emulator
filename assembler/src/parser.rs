@@ -1,5 +1,5 @@
-use core::num::ParseIntError;
-use std::{collections::HashMap, num::TryFromIntError};
+use core::num::{ParseIntError,TryFromIntError};
+use std::{collections::HashMap};
 
 use emulator_core::{
     program::Program,
@@ -9,7 +9,7 @@ use emulator_core::{
 use thiserror::Error;
 
 use crate::{
-    instruction_set::{ASMBinaryInstruction, ASMUnaryInstruction, Instruction},
+    instruction_set::{ASMBinaryInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction},
     tokenizer::{Literal, Token},
 };
 
@@ -82,14 +82,30 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
     fn parse_instruction(&mut self, inst: &str) {
         match inst {
             "NOP" => self.instructions.push(Instruction::Nop),
-            "ADD" => self.expect_binary_instruction(ASMBinaryInstruction::Add),
-            "SUB" => self.expect_binary_instruction(ASMBinaryInstruction::Sub),
-            "MUL" => self.expect_binary_instruction(ASMBinaryInstruction::Mul),
-            "DIV" => self.expect_binary_instruction(ASMBinaryInstruction::Div),
             "MOV" => self.expect_binary_instruction(ASMBinaryInstruction::Mov),
-            "JMP" => self.expect_destination(),
+            "ADD" => self.expect_binary_instruction(ASMBinaryInstruction::Add),
+            "ADDS" => self.expect_binary_instruction(ASMBinaryInstruction::AddS),
+            "SUB" => self.expect_binary_instruction(ASMBinaryInstruction::Sub),
+            "SUBS" => self.expect_binary_instruction(ASMBinaryInstruction::SubS),
+            "MUL" => self.expect_binary_instruction(ASMBinaryInstruction::Mul),
+            "MULS" => self.expect_binary_instruction(ASMBinaryInstruction::MulS),
+            "DIV" => self.expect_binary_instruction(ASMBinaryInstruction::Div),
+            "DIVS" => self.expect_binary_instruction(ASMBinaryInstruction::DivS),
             "INC" => self.expect_unary_instruction(ASMUnaryInstruction::Inc),
+            "INCS" => self.expect_unary_instruction(ASMUnaryInstruction::IncS),
             "DEC" => self.expect_unary_instruction(ASMUnaryInstruction::Dec),
+            "DECS" => self.expect_unary_instruction(ASMUnaryInstruction::DecS),
+            "JMP" => self.expect_destination(ASMJumpInstruction::Jmp),
+            "JZ" => self.expect_destination(ASMJumpInstruction::JZ),
+            "JNZ" => self.expect_destination(ASMJumpInstruction::JNZ),
+            "JC" => self.expect_destination(ASMJumpInstruction::JC),
+            "JNC" => self.expect_destination(ASMJumpInstruction::JNC),
+            "JS" => self.expect_destination(ASMJumpInstruction::JS),
+            "JNS" => self.expect_destination(ASMJumpInstruction::JNS),
+            "JG" => self.expect_destination(ASMJumpInstruction::JG),
+            "JL" => self.expect_destination(ASMJumpInstruction::JL),
+            "JGE" => self.expect_destination(ASMJumpInstruction::JGE),
+            "JLE" => self.expect_destination(ASMJumpInstruction::JLE),
             _ => self.add_error(ParserError::UnknownInstruction {
                 idx: self.idx,
                 inst: inst.to_string(),
@@ -97,7 +113,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         }
     }
 
-    fn expect_destination(&mut self) {
+    fn expect_destination(&mut self, instr: ASMJumpInstruction) {
         self.idx += 1;
 
         match self.tokens.get(self.idx) {
@@ -105,7 +121,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
                 Some(idx) => match i32::try_from(*idx) {
                     Ok(dest) => self
                         .instructions
-                        .push(Instruction::Jump { to: dest.into() }),
+                        .push(Instruction::from_jump_instr(instr, dest.into())),
                     Err(err) => self.add_error(ParserError::JumpDestinationTooLarge(err)),
                 },
                 None => self.add_error(ParserError::LabelNotFound {
@@ -160,7 +176,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         }
     }
 
-    fn expect_binary_instruction(&mut self, inst: ASMBinaryInstruction) {
+    fn expect_binary_instruction(&mut self, instr: ASMBinaryInstruction) {
         let acc = match self.expect_register() {
             Ok(reg) => reg,
             Err(err) => {
@@ -191,7 +207,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
                     }
                 };
                 self.instructions
-                    .push(Instruction::from_binary_reg_instr(inst, acc, rhs));
+                    .push(Instruction::from_binary_reg_instr(instr, acc, rhs));
             }
             Some(Token::Literal(lit)) => {
                 let val = match Self::convert_lit_to_val(lit) {
@@ -202,7 +218,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
                 };
 
                 self.instructions
-                    .push(Instruction::from_binary_val_instr(inst, acc, val));
+                    .push(Instruction::from_binary_val_instr(instr, acc, val));
             }
             token => {
                 let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
@@ -215,7 +231,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         }
     }
 
-    fn expect_unary_instruction(&mut self, inst: ASMUnaryInstruction) {
+    fn expect_unary_instruction(&mut self, instr: ASMUnaryInstruction) {
         let reg = match self.expect_register() {
             Ok(reg) => reg,
             Err(err) => {
@@ -224,7 +240,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         };
 
         self.instructions
-            .push(Instruction::from_unary_instr(inst, reg));
+            .push(Instruction::from_unary_instr(instr, reg));
     }
 }
 

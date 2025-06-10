@@ -15,6 +15,7 @@ pub trait Word:
     + Into<usize>
     + From<i32>
     + Eq
+    + Ord
     + Add<Self, Output = Self>
     + Sub<Self, Output = Self>
     + Mul<Self, Output = Self>
@@ -29,6 +30,11 @@ pub trait Word:
     /// # Errors
     /// Returns `ParseIntError` when the parsing failed.
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError>;
+
+    fn overflowing_add(&self, rhs: Self) -> (Self, bool);
+    fn overflowing_sub(&self, rhs: Self) -> (Self, bool);
+    fn overflowing_mul(&self, rhs: Self) -> (Self, bool);
+    fn overflowing_div(&self, rhs: Self) -> (Self, bool);
 }
 
 /// This macro is used to implement the From<i32> trait.
@@ -59,6 +65,26 @@ macro_rules! impl_word {
             /// Returns `ParseIntError` when the parsing failed.
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError> {
                 <$type>::from_str_radix(s, radix).map($name)
+            }
+
+            fn overflowing_add(&self, rhs: Self) -> (Self, bool) {
+                let (res, overflow) = self.0.overflowing_add(rhs.0);
+                (Self(res), overflow)
+            }
+
+            fn overflowing_sub(&self, rhs: Self) -> (Self, bool) {
+                let (res, overflow) = self.0.overflowing_sub(rhs.0);
+                (Self(res), overflow)
+            }
+
+            fn overflowing_mul(&self, rhs: Self) -> (Self, bool) {
+                let (res, overflow) = self.0.overflowing_mul(rhs.0);
+                (Self(res), overflow)
+            }
+
+            fn overflowing_div(&self, rhs: Self) -> (Self, bool) {
+                let (res, overflow) = self.0.overflowing_div(rhs.0);
+                (Self(res), overflow)
             }
         }
 

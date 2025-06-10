@@ -16,7 +16,7 @@ pub struct Registers<W> {
     pub pc: W,
     /// stack pointer
     pub sp: W,
-    /// flags: carry flag (C), negative flag (N), overflow flag (V), zero condition flag (Z)
+    /// flags: carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z)
     flags: [bool; 4],
 }
 
@@ -63,7 +63,7 @@ impl<W: Word> Registers<W> {
     pub const fn get_flag(&self, f: Flag) -> bool {
         match f {
             Flag::C => self.flags[0],
-            Flag::N => self.flags[1],
+            Flag::S => self.flags[1],
             Flag::V => self.flags[2],
             Flag::Z => self.flags[3],
         }
@@ -108,7 +108,7 @@ impl<W: Word> Registers<W> {
         let mut s = String::new();
 
         s.push_str(format!("C: {}, ", self.flags[0]).as_str());
-        s.push_str(format!("N: {}, ", self.flags[1]).as_str());
+        s.push_str(format!("S: {}, ", self.flags[1]).as_str());
         s.push_str(format!("V: {}", self.flags[2]).as_str());
         s.push_str(format!("Z: {}", self.flags[3]).as_str());
         format!("[{s}]")
@@ -185,8 +185,8 @@ impl FromStr for Register {
 pub enum Flag {
     /// Carry flag. Normally set when an addition results in a carry or a subtraction results in a borrow.
     C,
-    /// Negative flag. Normally set when the last arithmetic computation resulted in a negative value.
-    N,
+    /// Signed flag. Normally set when the last arithmetic computation resulted in a negative value.
+    S,
     /// Overflow flag. Normally set when the last arithmetic computation resulted in an overflow.
     V,
     /// Zero condition flag. Normally set when the last arithmetic, logical or bitwise computation resulted in zero.
