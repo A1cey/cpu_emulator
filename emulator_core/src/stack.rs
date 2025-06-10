@@ -167,18 +167,6 @@ from_i32!(I64, i64);
 from_i32!(I128, i128);
 from_i32!(ISize, isize);
 
-// from_word_for_usize!(U8);
-// from_word_for_usize!(U16);
-// from_word_for_usize!(U32);
-// from_word_for_usize!(U64);
-// from_word_for_usize!(U128);
-// from_word_for_usize!(USize);
-// from_word_for_usize!(I8);
-// from_word_for_usize!(I16);
-// from_word_for_usize!(I64);
-// from_word_for_usize!(I128);
-// from_word_for_usize!(ISize);
-
 /// Stack
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -213,7 +201,7 @@ impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Stack<STACK_SIZE, 
 
     /// Read a value from the stack at the given stack pointer.
     /// Returns the value on the stack or an `OutOfBounds` error.
-    fn read(&self, sp: usize) -> Result<&IS::W, StackError> {
+    pub fn read(&self, sp: usize) -> Result<&IS::W, StackError> {
         self.get(sp).ok_or(StackError::OutOfBounds {
             sp,
             stack_size: self.len(),
@@ -222,7 +210,7 @@ impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Stack<STACK_SIZE, 
 
     /// Write a value to the stack at the given stack pointer.
     /// Returns an `OutOfBounds` error if the stack pointer is out of bounds.
-    fn write(&mut self, sp: usize, value: IS::W) -> Result<(), StackError> {
+    pub fn write(&mut self, sp: usize, value: IS::W) -> Result<(), StackError> {
         let stack_size = self.len();
 
         self.get_mut(sp).map_or_else(

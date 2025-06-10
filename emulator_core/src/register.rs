@@ -16,8 +16,8 @@ pub struct Registers<W> {
     pub pc: W,
     /// stack pointer
     pub sp: W,
-    /// flags: zero condition flag (Z), overflow flag (O), carry flag (C)
-    flags: [bool; 3],
+    /// flags: carry flag (C), negative flag (N), overflow flag (V), zero condition flag (Z)
+    flags: [bool; 4],
 }
 
 impl<W: Word> Default for Registers<W> {
@@ -34,7 +34,7 @@ impl<W: Word> Registers<W> {
             general: [W::default(); GENERAL_REGISTER_COUNT],
             pc: W::default(),
             sp: W::default(),
-            flags: [false; 3],
+            flags: [false; 4],
         }
     }
 
@@ -62,9 +62,10 @@ impl<W: Word> Registers<W> {
     #[inline]
     pub const fn get_flag(&self, f: Flag) -> bool {
         match f {
-            Flag::Z => self.flags[0],
-            Flag::O => self.flags[1],
-            Flag::C => self.flags[2],
+            Flag::C => self.flags[0],
+            Flag::N => self.flags[1],
+            Flag::V => self.flags[2],
+            Flag::Z => self.flags[3],
         }
     }
 
@@ -106,9 +107,10 @@ impl<W: Word> Registers<W> {
     fn fmt_flags(&self) -> String {
         let mut s = String::new();
 
-        s.push_str(format!("Z: {}, ", self.flags[0]).as_str());
-        s.push_str(format!("O: {}, ", self.flags[1]).as_str());
-        s.push_str(format!("C: {}", self.flags[2]).as_str());
+        s.push_str(format!("C: {}, ", self.flags[0]).as_str());
+        s.push_str(format!("N: {}, ", self.flags[1]).as_str());
+        s.push_str(format!("V: {}", self.flags[2]).as_str());
+        s.push_str(format!("Z: {}", self.flags[3]).as_str());
         format!("[{s}]")
     }
 }
@@ -153,24 +155,24 @@ impl FromStr for Register {
     type Err = RegisterError;
     fn from_str(value: &str) -> Result<Self, Self::Err> {
         match value {
-            "R0" => Ok(Self::R0),
-            "R1" => Ok(Self::R1),
-            "R2" => Ok(Self::R2),
-            "R3" => Ok(Self::R3),
-            "R4" => Ok(Self::R4),
-            "R5" => Ok(Self::R5),
-            "R6" => Ok(Self::R6),
-            "R7" => Ok(Self::R7),
-            "R8" => Ok(Self::R8),
-            "R9" => Ok(Self::R9),
-            "R10" => Ok(Self::R10),
-            "R11" => Ok(Self::R11),
-            "R12" => Ok(Self::R12),
-            "R13" => Ok(Self::R13),
-            "R14" => Ok(Self::R14),
-            "R15" => Ok(Self::R15),
-            "PC" => Ok(Self::PC),
-            "SP" => Ok(Self::SP),
+            "R0" | "r0" => Ok(Self::R0),
+            "R1" | "r1" => Ok(Self::R1),
+            "R2" | "r2" => Ok(Self::R2),
+            "R3" | "r3" => Ok(Self::R3),
+            "R4" | "r4" => Ok(Self::R4),
+            "R5" | "r5" => Ok(Self::R5),
+            "R6" | "r6" => Ok(Self::R6),
+            "R7" | "r7" => Ok(Self::R7),
+            "R8" | "r8" => Ok(Self::R8),
+            "R9" | "r9" => Ok(Self::R9),
+            "R10" | "r10" => Ok(Self::R10),
+            "R11" | "r11" => Ok(Self::R11),
+            "R12" | "r12" => Ok(Self::R12),
+            "R13" | "r13" => Ok(Self::R13),
+            "R14" | "r14" => Ok(Self::R14),
+            "R15" | "r15" => Ok(Self::R15),
+            "PC" | "pc" => Ok(Self::PC),
+            "SP" | "sp" => Ok(Self::SP),
             _ => Err(RegisterError::ConversionFailed {
                 input: value.to_string(),
             }),
@@ -181,12 +183,14 @@ impl FromStr for Register {
 /// Flag registers
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum Flag {
-    /// Zero condition flag
-    Z,
-    /// Overflow flag
-    O,
-    /// Carry flag
+    /// Carry flag. Normally set when an addition results in a carry or a subtraction results in a borrow.
     C,
+    /// Negative flag. Normally set when the last arithmetic computation resulted in a negative value.
+    N,
+    /// Overflow flag. Normally set when the last arithmetic computation resulted in an overflow.
+    V,
+    /// Zero condition flag. Normally set when the last arithmetic, logical or bitwise computation resulted in zero.
+    Z,
 }
 
 #[derive(Debug, Error, Clone, PartialEq, Eq, Hash)]
