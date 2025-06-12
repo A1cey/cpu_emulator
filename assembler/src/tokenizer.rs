@@ -151,6 +151,7 @@ impl Tokenizer<'_> {
         match self.get_curr_char() {
             '\'' => self.expect_char_literal(),
             '"' => self.expect_string_literal(),
+            '-'  => self.expect_numeric_literal(),
             c if c.is_numeric() => self.expect_numeric_literal(),
             'T' => self.expect_boolean_true_literal(),
             'F' => self.expect_boolean_false_literal(),
@@ -424,19 +425,22 @@ mod test {
         let mut t = Tokenizer::from("#42");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Decimal("42")));
-        let mut t = Tokenizer::from("#0d42");
+        t = Tokenizer::from("#0d42");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Decimal("42")));
-        let mut t = Tokenizer::from("#0x4H");
+        t = Tokenizer::from("#-42");
+        t.expect_literal();
+        assert_eq!(t.tokens[0], Token::Literal(Literal::Decimal("-42")));
+        t = Tokenizer::from("#0x4H");
         t.expect_literal();
         assert_eq!(
             t.tokens[0],
             Token::Literal(Literal::Hexadecimal("4H".into()))
         );
-        let mut t = Tokenizer::from("#0b010110");
+        t = Tokenizer::from("#0b010110");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Binary("010110")));
-        let mut t = Tokenizer::from("#0o743");
+        t = Tokenizer::from("#0o743");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Octal("743")));
     }
