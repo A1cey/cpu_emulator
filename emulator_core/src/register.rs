@@ -6,8 +6,8 @@ use crate::stack::Word;
 
 const GENERAL_REGISTER_COUNT: usize = 16;
 
-/// Registers struct
-/// The register sizes correspond to the Stack Word size.
+/// Registers struct.
+/// The register sizes correspond to the stack word size.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
 pub struct Registers<W> {
     /// general purpose registers

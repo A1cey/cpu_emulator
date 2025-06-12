@@ -44,81 +44,81 @@ pub(crate) enum ASMJumpInstruction {
 /// Default instruction set for the processor.
 #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 pub enum Instruction<const STACK_SIZE: usize, W: Word> {
-    /// No operation. [NOP]
+    /// No operation. \[NOP\]
     Nop,
-    /// Copy a value from one register to another register. [MOV]
+    /// Copy a value from one register to another register. \[MOV\]
     MoveReg { to: Register, from: Register },
-    /// Copy a value into a register. [MOV]
+    /// Copy a value into a register. \[MOV\]
     MoveVal { to: Register, val: W },
-    /// Add the value of a register (rhs) to another register (acc). [ADD]
+    /// Add the value of a register (rhs) to another register (acc). \[ADD\]
     AddReg { acc: Register, rhs: Register },
-    /// Add the value of a register (rhs) to another register (acc) and set flags. [ADDS]
+    /// Add the value of a register (rhs) to another register (acc) and set flags. \[ADDS\]
     AddRegSigned { acc: Register, rhs: Register },
-    /// Add a value to a register (acc). [ADD]
+    /// Add a value to a register (acc). \[ADD\]
     AddVal { acc: Register, val: W },
-    /// Add a value to a register (acc) and set flags. [ADDS]
+    /// Add a value to a register (acc) and set flags. \[ADDS\]
     AddValSigned { acc: Register, val: W },
-    /// Subtract the value of a register (rhs) from another register (acc). [SUB]
+    /// Subtract the value of a register (rhs) from another register (acc). \[SUB\]
     SubReg { acc: Register, rhs: Register },
-    /// Subtract the value of a register (rhs) from another register (acc) and set flags. [SUBS]
+    /// Subtract the value of a register (rhs) from another register (acc) and set flags. \[SUBS\]
     SubRegSigned { acc: Register, rhs: Register },
-    /// Subtract a value from a register (acc). [SUB]
+    /// Subtract a value from a register (acc). \[SUB\]
     SubVal { acc: Register, val: W },
-    /// Subtract a value from a register (acc) and set flags. [SUBS]
+    /// Subtract a value from a register (acc) and set flags. \[SUBS\]
     SubValSigned { acc: Register, val: W },
     /// Multiply the value of a register (rhs) with the value of another register (acc).
-    /// The result is stored in acc. [MUL]
+    /// The result is stored in acc. \[MUL\]
     MulReg { acc: Register, rhs: Register },
     /// Multiply the value of a register (rhs) with the value of another register (acc) and set flags.
-    /// The result is stored in acc. [MULS]
+    /// The result is stored in acc. \[MULS\]
     MulRegSigned { acc: Register, rhs: Register },
     /// Multiply a value to with the value of a register (acc).
-    /// The result is stored in this register. [MUL]
+    /// The result is stored in this register. \[MUL\]
     MulVal { acc: Register, val: W },
     /// Multiply a value to with the value of a register (acc) and set flags.
-    /// The result is stored in this register. [MULS]
+    /// The result is stored in this register. \[MULS\]
     MulValSigned { acc: Register, val: W },
     /// Divide the value of a register (acc) by the value of another register (rhs).
-    /// The result is stored in acc. [DIV]
+    /// The result is stored in acc. \[DIV\]
     DivReg { acc: Register, rhs: Register },
     /// Divide the value of a register (acc) by the value of another register (rhs) and set flags.
-    /// The result is stored in acc. [DIVS]
+    /// The result is stored in acc. \[DIVS\]
     DivRegSigned { acc: Register, rhs: Register },
     /// Divide the value of a register (acc) by another value.
-    /// The result is stored in the register. [DIV]
+    /// The result is stored in the register. \[DIV\]
     DivVal { acc: Register, val: W },
     /// Divide the value of a register (acc) by another value and set flags.
-    /// The result is stored in the register. [DIVS]
+    /// The result is stored in the register. \[DIVS\]
     DivValSigned { acc: Register, val: W },
-    /// Increment the value in a register by one. [INC]
+    /// Increment the value in a register by one. \[INC\]
     Inc { reg: Register },
-    /// Increment the value in a register by one and set flags. [INCS]
+    /// Increment the value in a register by one and set flags. \[INCS\]
     IncSigned { reg: Register },
-    /// Decrement the value in a register by one. [DEC]
+    /// Decrement the value in a register by one. \[DEC\]
     Dec { reg: Register },
-    /// Decrement the value in a register by one and set flags. [DECS]
+    /// Decrement the value in a register by one and set flags. \[DECS\]
     DecSigned { reg: Register },
-    /// Set program pointer to value, effectively jumping to the instruction at this point in the program. [JMP]
+    /// Set program pointer to value, effectively jumping to the instruction at this point in the program. \[JMP\]
     Jump { to: W },
-    /// Analog to `Jump` but only if zero flag is set. [JZ]
+    /// Analog to `Jump` but only if zero flag is set. \[JZ\]
     JumpZero { to: W },
-    /// Analog to `Jump` but only if zero flag is not set. [JNZ]
+    /// Analog to `Jump` but only if zero flag is not set. \[JNZ\]
     JumpNotZero { to: W },
-    /// Analog to `Jump` but only if carry flag is set. [JC]
+    /// Analog to `Jump` but only if carry flag is set. \[JC\]
     JumpCarry { to: W },
-    /// Analog to `Jump` but only if carry flag is not set. [JNC]
+    /// Analog to `Jump` but only if carry flag is not set. \[JNC\]
     JumpNotCarry { to: W },
-    /// Analog to `Jump` but only if signed flag is set. [JS]
+    /// Analog to `Jump` but only if signed flag is set. \[JS\]
     JumpSigned { to: W },
-    /// Analog to `Jump` but only if signed flag is not set. [JNS]
+    /// Analog to `Jump` but only if signed flag is not set. \[JNS\]
     JumpNotSigned { to: W },
-    /// Analog to `Jump` but only if zero flag and signed flag are not set. [JG]
+    /// Analog to `Jump` but only if zero flag and signed flag are not set. \[JG\]
     JumpGreater { to: W },
-    /// Analog to `Jump` but only if zero flag is not set and signed flag is set. [JL]
+    /// Analog to `Jump` but only if zero flag is not set and signed flag is set. \[JL\]
     JumpLess { to: W },
-    /// Analog to `Jump` but only if zero flag is set or signed flag is not set. [JGE]
+    /// Analog to `Jump` but only if zero flag is set or signed flag is not set. \[JGE\]
     JumpGreaterOrEq { to: W },
-    /// Analog to `Jump` but only if zero flag or signed flag is set. [JLE]
+    /// Analog to `Jump` but only if zero flag or signed flag is set. \[JLE\]
     JumpLessOrEq { to: W },
 }
 
