@@ -1,10 +1,10 @@
-use core::num::{ParseIntError,TryFromIntError};
-use std::{collections::HashMap};
+use core::num::ParseIntError;
+use std::collections::HashMap;
 
 use emulator_core::{
     program::Program,
     register::{Register, RegisterError},
-    stack::Word,
+    word::Word,
 };
 use thiserror::Error;
 
@@ -118,12 +118,9 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
 
         match self.tokens.get(self.idx) {
             Some(Token::Label(label)) => match self.labels.get(label.as_str()) {
-                Some(idx) => match i32::try_from(*idx) {
-                    Ok(dest) => self
-                        .instructions
-                        .push(Instruction::from_jump_instr(instr, dest.into())),
-                    Err(err) => self.add_error(ParserError::JumpDestinationTooLarge(err)),
-                },
+                Some(idx) => self
+                    .instructions
+                    .push(Instruction::from_jump_instr(instr, (*idx).into())),
                 None => self.add_error(ParserError::LabelNotFound {
                     idx: self.idx,
                     label: label.clone(),
@@ -268,9 +265,4 @@ pub enum ParserError {
     CannotConvertStrToVal,
     #[error("Label \".{label}\" not found. Needed at {idx}.")]
     LabelNotFound { idx: usize, label: String },
-    #[error(
-        "There are too many labels in this program (only {} allowed).",
-        i32::MAX
-    )]
-    JumpDestinationTooLarge(#[from] TryFromIntError),
 }

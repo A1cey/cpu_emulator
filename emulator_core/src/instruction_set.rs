@@ -1,6 +1,6 @@
 use core::fmt::Debug;
 
-use crate::{processor::Processor, stack::Word};
+use crate::{processor::Processor, word::Word};
 
 /// Trait for implementing a instruction set that can be used by the processor.
 pub trait InstructionSet<const STACK_SIZE: usize>: Sized {

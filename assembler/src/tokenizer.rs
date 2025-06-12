@@ -151,7 +151,7 @@ impl Tokenizer<'_> {
         match self.get_curr_char() {
             '\'' => self.expect_char_literal(),
             '"' => self.expect_string_literal(),
-            '-'  => self.expect_numeric_literal(),
+            '-' => self.expect_numeric_literal(),
             c if c.is_numeric() => self.expect_numeric_literal(),
             'T' => self.expect_boolean_true_literal(),
             'F' => self.expect_boolean_false_literal(),

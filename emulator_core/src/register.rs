@@ -2,7 +2,7 @@ use core::fmt::Debug;
 use core::str::FromStr;
 use thiserror::Error;
 
-use crate::stack::Word;
+use crate::word::Word;
 
 const GENERAL_REGISTER_COUNT: usize = 16;
 

@@ -1,9 +1,9 @@
-//! The [`Processor`] is the main component of the emulator. It represents a simplified real world processor with a stack, registers and flags. 
-//! 
+//! The [`Processor`] is the main component of the emulator. It represents a simplified real world processor with a stack, registers and flags.
+//!
 //! It can store a singular program.
 //! It has 16 general use registers, a program counter (pc), a stack pointer (sp) and 4 flags (carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z)).
-//! It also has a stack of size STACK_SIZE.
-//! 
+//! It also has a stack of size `STACK_SIZE`.
+//!
 //! To run a loaded program two methods are provided:
 //! - To load a program use [`Processor::load_program()`].
 //! - To run the entire program use [`Processor::run_program()`].
@@ -39,7 +39,7 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     }
 
     /// Loads a program into the processor.
-    /// 
+    ///
     /// The program cannot be changed after being loaded. To make changes, an updated or entirely new program has to be loaded.
     pub const fn load_program(&mut self, program: &'a Program<STACK_SIZE, IS>) {
         self.program = Some(program);
@@ -49,8 +49,8 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     ///
     /// # Errors
     /// The execution of the program stops and a `ProgramError` is returned if an error occured during the fetching of an instruction.
-    /// 
-    /// Note: The execution of an instruction will never return an error. If the instruction is valid it will not error. 
+    ///
+    /// Note: The execution of an instruction will never return an error. If the instruction is valid it will not error.
     /// Invalid instructions are a major bug in the implementation of the instruction set that is used for the program.
     pub fn run_program(&mut self) -> Result<(), ProgramError> {
         loop {
@@ -62,8 +62,8 @@ impl<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Processor<'a, 
     ///
     /// # Errors
     /// Returns a `ProgramError` if an error occured during fetching.
-    /// 
-    /// Note: The execution of an instruction will never return an error. If the instruction is valid it will not error. 
+    ///
+    /// Note: The execution of an instruction will never return an error. If the instruction is valid it will not error.
     /// Invalid instructions are a major bug in the implementation of the instruction set that is used for the program.
     pub fn execute_next_instruction(&mut self) -> Result<(), ProgramError> {
         println!("{}", self.registers);

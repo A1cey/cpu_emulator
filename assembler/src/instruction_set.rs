@@ -3,7 +3,7 @@ use core::cmp::Ordering;
 use emulator_core::instruction_set::InstructionSet;
 use emulator_core::processor::Processor;
 use emulator_core::register::{Flag, Register};
-use emulator_core::stack::Word;
+use emulator_core::word::Word;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub(crate) enum ASMBinaryInstruction {
@@ -287,10 +287,11 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
     fn add_val_signed(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let acc_val = processor.registers.get_reg(acc);
         let (res, overflow) = acc_val.overflowing_add(val);
+        let carry = acc_val.carry_add(val);
+
         processor.registers.set_reg(acc, res);
         processor.registers.set_flag(Flag::V, overflow);
-
-        // TODO: solution for carry flag needed
+        processor.registers.set_flag(Flag::C, carry);
 
         Self::set_signed_zero_flags(res, processor);
     }
@@ -321,10 +322,11 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
     fn sub_val_signed(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let acc_val = processor.registers.get_reg(acc);
         let (res, overflow) = acc_val.overflowing_sub(val);
+        let carry = acc_val.carry_sub(val);
+
         processor.registers.set_reg(acc, res);
         processor.registers.set_flag(Flag::V, overflow);
-
-        // TODO: solution for carry flag needed
+        processor.registers.set_flag(Flag::C, carry);
 
         Self::set_signed_zero_flags(res, processor);
     }
@@ -359,10 +361,11 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
     fn mul_val_signed(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let acc_val = processor.registers.get_reg(acc);
         let (res, overflow) = acc_val.overflowing_mul(val);
+        let carry = acc_val.carry_mul(val);
+
         processor.registers.set_reg(acc, res);
         processor.registers.set_flag(Flag::V, overflow);
-
-        // TODO: solution for carry flag needed
+        processor.registers.set_flag(Flag::C, carry);
 
         Self::set_signed_zero_flags(res, processor);
     }
@@ -397,10 +400,11 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
     fn div_val_signed(acc: Register, val: W, processor: &mut Processor<STACK_SIZE, Self>) {
         let acc_val = processor.registers.get_reg(acc);
         let (res, overflow) = acc_val.overflowing_div(val);
+        let carry = overflow; // this is the same as acc_val.carry_div(val)
+
         processor.registers.set_reg(acc, res);
         processor.registers.set_flag(Flag::V, overflow);
-
-        // TODO: solution for carry flag needed
+        processor.registers.set_flag(Flag::C, carry);
 
         Self::set_signed_zero_flags(res, processor);
     }
@@ -519,7 +523,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 #[cfg(test)]
 mod test {
     use super::*;
-    use emulator_core::stack::*;
+    use emulator_core::word::*;
 
     const STACK_SIZE: usize = 32;
     type IS = Instruction<STACK_SIZE, I8>;

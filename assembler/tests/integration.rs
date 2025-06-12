@@ -1,5 +1,5 @@
 use assembler::{assemble, instruction_set::Instruction};
-use emulator_core::{processor::Processor, program::Program, register::Register, stack::I32};
+use emulator_core::{processor::Processor, program::Program, register::Register, word::I32};
 
 #[test]
 fn simple_5x2_multiplication() {

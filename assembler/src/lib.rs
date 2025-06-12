@@ -1,6 +1,6 @@
 use crate::parser::{Parser, ParserError};
 use crate::tokenizer::{Tokenizer, TokenizerError};
-use emulator_core::{program::Program, stack::Word};
+use emulator_core::{program::Program, word::Word};
 use thiserror::Error;
 
 use crate::instruction_set::Instruction;
