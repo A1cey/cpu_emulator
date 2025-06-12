@@ -5,9 +5,9 @@
 //! It also has a stack of size `STACK_SIZE`.
 //!
 //! To run a loaded program two methods are provided:
-//! - To load a program use [`Processor::load_program()`].
-//! - To run the entire program use [`Processor::run_program()`].
-//! - To run only the next instruction use [`Processor::execute_next_instruction()`].
+//! - To load a program use [`load_program()`](Processor::load_program()).
+//! - To run the entire program use [`run_program()`](Processor::run_program()).
+//! - To run only the next instruction use [`execute_next_instruction()`](Processor::execute_next_instruction()).
 use crate::instruction_set::InstructionSet;
 use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};

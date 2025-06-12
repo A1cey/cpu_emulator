@@ -4,7 +4,6 @@ use thiserror::Error;
 
 use crate::instruction_set::InstructionSet;
 
-/// Stack
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
 pub struct Stack<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>>(pub [IS::W; STACK_SIZE]);

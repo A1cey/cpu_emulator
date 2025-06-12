@@ -27,24 +27,39 @@ pub trait Word:
     + Rem<Self, Output = Self>
     + RemAssign
 {
-    /// This is a wrapper around the `from_str_radix` function that is implemented for all of Rust's numeric types.
+    /// This is a wrapper around the [`from_str_radix()`](i32::from_str_radix()) function that is implemented for all of Rust's numeric types.
     ///
     /// # Errors
-    /// Returns `ParseIntError` when the parsing failed.
+    /// Returns [`ParseIntError`] when the parsing failed.
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError>;
 
+    /// Checks for carry when adding.
     fn carry_add(&self, rhs: Self) -> bool;
+    
+    /// Checks for carry when subtracting.
     fn carry_sub(&self, rhs: Self) -> bool;
+    
+    /// Checks for carry when multiplying.
     fn carry_mul(&self, rhs: Self) -> bool;
+    
+    /// Checks for division overflow (i.e., MIN / -1 for signed types).
+    /// Similiar to [`Word::overflowing_div()`] this is a convenience wrapper over Rust's [`overflowing_div()`](i32::overflowing_div()).
+    /// However it discards the result of the division.
     fn carry_div(&self, rhs: Self) -> bool;
 
+    /// Convenience wrapper over Rust's [`overflowing_add()`](i32::overflowing_add()).
     fn overflowing_add(&self, rhs: Self) -> (Self, bool);
+    /// Convenience wrapper over Rust's [`overflowing_sub()`](i32::overflowing_sub()).
     fn overflowing_sub(&self, rhs: Self) -> (Self, bool);
+    /// Convenience wrapper over Rust's [`overflowing_mul()`](i32::overflowing_mul()).
     fn overflowing_mul(&self, rhs: Self) -> (Self, bool);
+    /// Convenience wrapper over Rust's [`overflowing_div()`](i32::overflowing_div()).
     fn overflowing_div(&self, rhs: Self) -> (Self, bool);
 }
 
-/// This macro is used to implement the From<i32> trait.
+// This macro is used to implement the From<i32> trait for Word.
+// It is necessary as Word is implemented for all signed types also i32. 
+// From<i32> cannot be implemented for i32 and therefore this extra macro is needed. 
 macro_rules! from_i32 {
     ($name: ident, $type: ty $(,)? ) => {
         impl ::core::convert::From<i32> for $name {
@@ -58,7 +73,7 @@ macro_rules! from_i32 {
     };
 }
 
-/// This macro can be used to implement the Word trait for a Wrapper struct around another type like i8.
+// This macro can be used to implement the Word trait for a wrapper struct around another type like i8.
 macro_rules! impl_word {
     ($name: ident, $type: ty $(,)? ) => {
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
@@ -66,38 +81,28 @@ macro_rules! impl_word {
         pub struct $name($type);
 
         impl Word for $name {
-            /// This is a wrapper around the `from_str_radix` function that is implemented for all of Rust's signed numeric types.
-            ///
-            /// # Errors
-            /// Returns `ParseIntError` when the parsing failed.
             fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError> {
                 <$type>::from_str_radix(s, radix).map($name)
             }
 
-            /// Checks for carry when adding.
             fn carry_add(&self, rhs: Self) -> bool {
                 #[allow(clippy::cast_sign_loss)]
                 let (lhs, rhs) = (self.0 as u128, rhs.0 as u128);
                 lhs + rhs > <$type>::MAX as u128
             }
 
-            /// Checks for carry when subtracting.
             fn carry_sub(&self, rhs: Self) -> bool {
                 #[allow(clippy::cast_sign_loss)]
                 let (lhs, rhs) = (self.0 as u128, rhs.0 as u128);
                 lhs < rhs
             }
 
-            /// Checks for carry when multiplying.
             fn carry_mul(&self, rhs: Self) -> bool {
                 #[allow(clippy::cast_sign_loss)]
                 let (lhs, rhs) = (self.0 as u128, rhs.0 as u128);
                 lhs * rhs > <$type>::MAX as u128
             }
 
-            /// Checks for division overflow (i.e., MIN / -1 for signed types).
-            /// Similiar to [`Word::overflowing_div()`] this is a convenience wrapper over `overflowing_div()`.
-            /// However it discards the result of the division.
             fn carry_div(&self, rhs: Self) -> bool {
                 self.0.overflowing_div(rhs.0).1
             }
