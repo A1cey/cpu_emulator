@@ -1,8 +1,6 @@
 use core::fmt::{Debug, Display};
 use core::num::ParseIntError;
-use core::ops::{
-    Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign,
-};
+use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign};
 
 /// Marker trait for types that can be used as words in a stack.
 pub trait Word:
@@ -35,13 +33,13 @@ pub trait Word:
 
     /// Checks for carry when adding.
     fn carry_add(&self, rhs: Self) -> bool;
-    
+
     /// Checks for carry when subtracting.
     fn carry_sub(&self, rhs: Self) -> bool;
-    
+
     /// Checks for carry when multiplying.
     fn carry_mul(&self, rhs: Self) -> bool;
-    
+
     /// Checks for division overflow (i.e., MIN / -1 for signed types).
     /// Similiar to [`Word::overflowing_div()`] this is a convenience wrapper over Rust's [`overflowing_div()`](i32::overflowing_div()).
     /// However it discards the result of the division.
@@ -58,8 +56,8 @@ pub trait Word:
 }
 
 // This macro is used to implement the From<i32> trait for Word.
-// It is necessary as Word is implemented for all signed types also i32. 
-// From<i32> cannot be implemented for i32 and therefore this extra macro is needed. 
+// It is necessary as Word is implemented for all signed types also i32.
+// From<i32> cannot be implemented for i32 and therefore this extra macro is needed.
 macro_rules! from_i32 {
     ($name: ident, $type: ty $(,)? ) => {
         impl ::core::convert::From<i32> for $name {

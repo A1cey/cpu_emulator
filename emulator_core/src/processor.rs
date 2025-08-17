@@ -20,9 +20,7 @@ pub struct Processor<'a, const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>
     program: Option<&'a Program<STACK_SIZE, IS>>,
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Default
-    for Processor<'_, STACK_SIZE, IS>
-{
+impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Default for Processor<'_, STACK_SIZE, IS> {
     fn default() -> Self {
         Self::new()
     }

@@ -37,7 +37,7 @@
 //! #
 //! # #[derive(Debug, PartialEq, Eq, Clone, Hash)]
 //! # struct Instruction<const STACK_SIZE: usize, W: Word> (PhantomData<W>);
-//! # 
+//! #
 //! # impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instruction<STACK_SIZE, W> {
 //! #     type Instruction = Self;
 //! #     type W = W;

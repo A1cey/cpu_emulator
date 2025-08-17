@@ -36,6 +36,8 @@ impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Stack<STACK_SIZE, 
     }
 
     /// Read a value from the stack at the given stack pointer.
+    /// 
+    /// # Errors
     /// Returns the value on the stack or an `OutOfBounds` error.
     pub fn read(&self, sp: usize) -> Result<&IS::W, StackError> {
         self.get(sp).ok_or(StackError::OutOfBounds {
@@ -45,6 +47,8 @@ impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Stack<STACK_SIZE, 
     }
 
     /// Write a value to the stack at the given stack pointer.
+    /// 
+    /// # Errors
     /// Returns an `OutOfBounds` error if the stack pointer is out of bounds.
     pub fn write(&mut self, sp: usize, value: IS::W) -> Result<(), StackError> {
         let stack_size = self.len();
