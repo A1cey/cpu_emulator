@@ -9,9 +9,7 @@ use emulator_core::{
 use thiserror::Error;
 
 use crate::{
-    instruction_set::{
-        ASMBinaryInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction, Operand,
-    },
+    instruction_set::{ASMBinaryInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction, Operand},
     tokenizer::{Literal, Token},
 };
 
@@ -22,7 +20,6 @@ pub struct Parser<'a, const STACK_SIZE: usize, W: Word> {
     errors: Option<Vec<ParserError>>,
     idx: usize,
     labels: HashMap<&'a str, usize>,
-    is_done: bool,
 }
 
 impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
@@ -33,7 +30,6 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
             instructions: Vec::default(),
             idx: 0,
             labels: HashMap::default(),
-            is_done: false,
         }
     }
 
@@ -50,26 +46,28 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
     }
 
     fn run(&mut self) {
-        while self.idx < self.tokens.len() && !self.is_done {
-            match self.tokens.get(self.idx) {
-                Some(token) => match token {
-                    Token::Label(label) => {
-                        if let Some(old_idx) = self.labels.insert(label, self.idx) {
-                            self.add_error(ParserError::DuplicateLabel {
-                                idx: self.idx,
-                                old_idx,
-                            });
-                        }
+        let mut instruction_count = 0;
+
+        while self.idx < self.tokens.len() {
+            match &self.tokens[self.idx] {
+                Token::Label(label) => {
+                    if let Some(old_instruction_idx) = self.labels.insert(label, instruction_count) {
+                        self.add_error(ParserError::DuplicateLabel {
+                            idx: instruction_count,
+                            old_idx: old_instruction_idx,
+                        });
                     }
-                    Token::Instruction(inst) => self.parse_instruction(inst),
-                    Token::End => self.is_done = true,
-                    token => self.add_error(ParserError::InvalidToken {
-                        idx: self.idx,
-                        expected: "Label or Instruction",
-                        got: format!("{token:?}"),
-                    }),
-                },
-                None => self.is_done = true,
+                }
+                Token::Instruction(inst) => {
+                    self.parse_instruction(inst);
+                    instruction_count += 1;
+                }
+                Token::End => break,
+                token => self.add_error(ParserError::InvalidToken {
+                    idx: self.idx,
+                    expected: "Label or Instruction",
+                    got: format!("{token:?}"),
+                }),
             }
 
             self.idx += 1;
@@ -82,32 +80,36 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
     }
 
     fn parse_instruction(&mut self, inst: &str) {
+        use ASMBinaryInstruction::*;
+        use ASMJumpInstruction::*;
+        use ASMUnaryInstruction::*;
+
         match inst {
             "NOP" => self.instructions.push(Instruction::Nop),
-            "MOV" => self.expect_binary_instruction(ASMBinaryInstruction::Mov),
-            "ADD" => self.expect_binary_instruction(ASMBinaryInstruction::Add),
-            "ADDS" => self.expect_binary_instruction(ASMBinaryInstruction::AddS),
-            "SUB" => self.expect_binary_instruction(ASMBinaryInstruction::Sub),
-            "SUBS" => self.expect_binary_instruction(ASMBinaryInstruction::SubS),
-            "MUL" => self.expect_binary_instruction(ASMBinaryInstruction::Mul),
-            "MULS" => self.expect_binary_instruction(ASMBinaryInstruction::MulS),
-            "DIV" => self.expect_binary_instruction(ASMBinaryInstruction::Div),
-            "DIVS" => self.expect_binary_instruction(ASMBinaryInstruction::DivS),
-            "INC" => self.expect_unary_instruction(ASMUnaryInstruction::Inc),
-            "INCS" => self.expect_unary_instruction(ASMUnaryInstruction::IncS),
-            "DEC" => self.expect_unary_instruction(ASMUnaryInstruction::Dec),
-            "DECS" => self.expect_unary_instruction(ASMUnaryInstruction::DecS),
-            "JMP" => self.expect_destination(ASMJumpInstruction::Jmp),
-            "JZ" => self.expect_destination(ASMJumpInstruction::JZ),
-            "JNZ" => self.expect_destination(ASMJumpInstruction::JNZ),
-            "JC" => self.expect_destination(ASMJumpInstruction::JC),
-            "JNC" => self.expect_destination(ASMJumpInstruction::JNC),
-            "JS" => self.expect_destination(ASMJumpInstruction::JS),
-            "JNS" => self.expect_destination(ASMJumpInstruction::JNS),
-            "JG" => self.expect_destination(ASMJumpInstruction::JG),
-            "JL" => self.expect_destination(ASMJumpInstruction::JL),
-            "JGE" => self.expect_destination(ASMJumpInstruction::JGE),
-            "JLE" => self.expect_destination(ASMJumpInstruction::JLE),
+            "MOV" => self.expect_binary_instruction(Mov),
+            "ADD" => self.expect_binary_instruction(Add),
+            "ADDS" => self.expect_binary_instruction(AddS),
+            "SUB" => self.expect_binary_instruction(Sub),
+            "SUBS" => self.expect_binary_instruction(SubS),
+            "MUL" => self.expect_binary_instruction(Mul),
+            "MULS" => self.expect_binary_instruction(MulS),
+            "DIV" => self.expect_binary_instruction(Div),
+            "DIVS" => self.expect_binary_instruction(DivS),
+            "INC" => self.expect_unary_instruction(Inc),
+            "INCS" => self.expect_unary_instruction(IncS),
+            "DEC" => self.expect_unary_instruction(Dec),
+            "DECS" => self.expect_unary_instruction(DecS),
+            "JMP" => self.expect_destination(Jmp),
+            "JZ" => self.expect_destination(JZ),
+            "JNZ" => self.expect_destination(JNZ),
+            "JC" => self.expect_destination(JC),
+            "JNC" => self.expect_destination(JNC),
+            "JS" => self.expect_destination(JS),
+            "JNS" => self.expect_destination(JNS),
+            "JG" => self.expect_destination(JG),
+            "JL" => self.expect_destination(JL),
+            "JGE" => self.expect_destination(JGE),
+            "JLE" => self.expect_destination(JLE),
             _ => self.add_error(ParserError::UnknownInstruction {
                 idx: self.idx,
                 inst: inst.to_string(),
@@ -118,47 +120,70 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
     fn expect_destination(&mut self, instr: ASMJumpInstruction) {
         self.idx += 1;
 
-        match self.tokens.get(self.idx) {
-            Some(Token::Label(label)) => match self.labels.get(label.as_str()) {
-                Some(idx) => self
+        if let Some(Token::Label(label)) = self.tokens.get(self.idx) {
+            match self.labels.get(label.as_str()) {
+                Some(&idx) => self
                     .instructions
-                    .push(Instruction::from_jump_instruction(instr, (*idx).into())),
+                    .push(Instruction::from_jump_instruction(instr, idx.into())),
                 None => self.add_error(ParserError::LabelNotFound {
                     idx: self.idx,
                     label: label.clone(),
                 }),
-            },
-            token => {
-                let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
-                self.add_error(ParserError::InvalidToken {
-                    idx: self.idx,
-                    expected: "Label",
-                    got: token_str,
-                });
             }
+        } else {
+            self.add_error(ParserError::InvalidToken {
+                idx: self.idx,
+                expected: "Label",
+                got: self.current_token_string(),
+            });
         }
     }
 
     fn expect_register(&mut self) -> Result<Register, ParserError> {
         match self.get_next() {
-            Token::Register(reg) => reg
-                .parse::<Register>()
-                .map_err(ParserError::RegisterParsing),
-            token => {
-                let token_str = format!("{token:?}");
-                Err(ParserError::InvalidToken {
-                    idx: self.idx,
-                    expected: "Register",
-                    got: token_str,
-                })
-            }
+            Some(Token::Register(reg)) => reg.parse::<Register>().map_err(ParserError::RegisterParsing),
+            _ => Err(ParserError::InvalidToken {
+                idx: self.idx,
+                expected: "Register",
+                got: self.current_token_string(),
+            }),
+        }
+    }
+
+    fn expect_comma(&mut self) -> Result<(), ParserError> {
+        match self.get_next() {
+            Some(Token::Comma) => Ok(()),
+            _ => Err(ParserError::InvalidToken {
+                idx: self.idx,
+                expected: "Comma",
+                got: self.current_token_string(),
+            }),
+        }
+    }
+
+    fn expect_operand(&mut self) -> Result<Operand<W>, ParserError> {
+        match self.get_next() {
+            Some(Token::Register(reg)) => Ok(Operand::Register(reg.parse().map_err(ParserError::RegisterParsing)?)),
+            Some(Token::Literal(lit)) => Ok(Operand::Value(Self::convert_lit_to_val(lit)?)),
+            _ => Err(ParserError::InvalidToken {
+                idx: self.idx,
+                expected: "Register or Literal",
+                got: self.current_token_string(),
+            }),
         }
     }
 
     #[inline]
-    fn get_next(&mut self) -> &Token<'_> {
+    fn get_next(&mut self) -> Option<&Token<'_>> {
         self.idx += 1;
-        self.tokens.get(self.idx).unwrap_or(&Token::End)
+        self.tokens.get(self.idx)
+    }
+
+    #[inline]
+    fn current_token_string(&self) -> String {
+        self.tokens
+            .get(self.idx)
+            .map_or_else(|| "End".to_string(), |token| format!("{token:?}"))
     }
 
     fn convert_lit_to_val(lit: &Literal<'_>) -> Result<W, ParserError> {
@@ -167,9 +192,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
             Literal::Binary(s) => W::from_str_radix(s, 2).map_err(ParserError::LiteralParsing),
             Literal::Boolean(s) => Ok(i32::from(*s).into()),
             Literal::Decimal(s) => W::from_str_radix(s, 10).map_err(ParserError::LiteralParsing),
-            Literal::Hexadecimal(s) => {
-                W::from_str_radix(s, 16).map_err(ParserError::LiteralParsing)
-            }
+            Literal::Hexadecimal(s) => W::from_str_radix(s, 16).map_err(ParserError::LiteralParsing),
             Literal::Octal(s) => W::from_str_radix(s, 8).map_err(ParserError::LiteralParsing),
             Literal::String(_) => Err(ParserError::CannotConvertStrToVal),
         }
@@ -178,74 +201,29 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
     fn expect_binary_instruction(&mut self, instr: ASMBinaryInstruction) {
         let acc = match self.expect_register() {
             Ok(reg) => reg,
-            Err(err) => {
-                return self.add_error(err);
-            }
+            Err(err) => return self.add_error(err),
         };
 
-        self.idx += 1;
-        match self.tokens.get(self.idx) {
-            Some(Token::Comma) => {}
-            token => {
-                let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
-                self.add_error(ParserError::InvalidToken {
-                    idx: self.idx,
-                    expected: "Comma",
-                    got: token_str,
-                });
-            }
+        if let Err(err) = self.expect_comma() {
+            return self.add_error(err);
         }
 
-        self.idx += 1;
-        match self.tokens.get(self.idx) {
-            Some(Token::Register(rhs)) => {
-                let rhs = match rhs.parse::<Register>() {
-                    Ok(reg) => reg,
-                    Err(err) => {
-                        return self.add_error(ParserError::RegisterParsing(err));
-                    }
-                };
-                self.instructions.push(Instruction::from_binary_instruction(
-                    instr,
-                    acc,
-                    Operand::Register(rhs),
-                ));
-            }
-            Some(Token::Literal(lit)) => {
-                let val = match Self::convert_lit_to_val(lit) {
-                    Ok(val) => val,
-                    Err(err) => {
-                        return self.add_error(err);
-                    }
-                };
+        let operand = match self.expect_operand() {
+            Ok(op) => op,
+            Err(err) => return self.add_error(err),
+        };
 
-                self.instructions.push(Instruction::from_binary_instruction(
-                    instr,
-                    acc,
-                    Operand::Value(val),
-                ));
-            }
-            token => {
-                let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
-                self.add_error(ParserError::InvalidToken {
-                    idx: self.idx,
-                    expected: "Register or Literal",
-                    got: token_str,
-                });
-            }
-        }
+        self.instructions
+            .push(Instruction::from_binary_instruction(instr, acc, operand));
     }
 
     fn expect_unary_instruction(&mut self, instr: ASMUnaryInstruction) {
         let reg = match self.expect_register() {
             Ok(reg) => reg,
-            Err(err) => {
-                return self.add_error(err);
-            }
+            Err(err) => return self.add_error(err),
         };
 
-        self.instructions
-            .push(Instruction::from_unary_instruction(instr, reg));
+        self.instructions.push(Instruction::from_unary_instruction(instr, reg));
     }
 }
 
@@ -267,9 +245,7 @@ pub enum ParserError {
     RegisterParsing(#[from] RegisterError),
     #[error("Error while parsing literal.")]
     LiteralParsing(#[from] ParseIntError),
-    #[error(
-        "Strings cannot be converted to numeric values directly. You could use a hex representation instead."
-    )]
+    #[error("Strings cannot be converted to numeric values directly. You could use a hex representation instead.")]
     CannotConvertStrToVal,
     #[error("Label \".{label}\" not found. Needed at {idx}.")]
     LabelNotFound { idx: usize, label: String },

@@ -18,9 +18,7 @@ pub fn assemble<const STACK_SIZE: usize, W: Word>(
 ) -> Result<Program<STACK_SIZE, Instruction<STACK_SIZE, W>>, Vec<AssemblerError>> {
     Tokenizer::tokenize(input.as_ref())
         .map_err(|err| err.into_iter().map(Into::into).collect())
-        .and_then(|tokens| {
-            Parser::parse(&tokens).map_err(|err| err.into_iter().map(Into::into).collect())
-        })
+        .and_then(|tokens| Parser::parse(&tokens).map_err(|err| err.into_iter().map(Into::into).collect()))
 }
 
 #[derive(Debug, Error, Clone, PartialEq, Eq)]

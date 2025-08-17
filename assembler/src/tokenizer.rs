@@ -31,7 +31,7 @@ pub struct Tokenizer<'a> {
 }
 
 impl Tokenizer<'_> {
-    const fn from(input: &str) -> Tokenizer {
+    const fn from(input: &str) -> Tokenizer<'_> {
         Tokenizer {
             tokens: Vec::new(),
             curr_idx: 0,
@@ -42,7 +42,7 @@ impl Tokenizer<'_> {
         }
     }
 
-    pub(crate) fn tokenize(input: &str) -> Result<Vec<Token>, Vec<TokenizerError>> {
+    pub(crate) fn tokenize(input: &str) -> Result<Vec<Token<'_>>, Vec<TokenizerError>> {
         let mut tokenizer = Tokenizer::from(input);
 
         tokenizer.run();
@@ -81,9 +81,14 @@ impl Tokenizer<'_> {
     }
 
     fn get_curr_char(&self) -> char {
-        self.input.chars().nth(self.curr_idx).map_or_else(||unreachable!(
-            "The index should not be greater or equal to the length of the input. This should never happen."
-        ), |c|c.to_uppercase().next().expect("Not a valid character."))
+        self.input.chars().nth(self.curr_idx).map_or_else(
+            || {
+                unreachable!(
+                    "The index should not be greater or equal to the length of the input. This should never happen."
+                )
+            },
+            |c| c.to_uppercase().next().expect("Not a valid character."),
+        )
     }
 
     fn set_curr_idx_to_token_end(&mut self) {
@@ -377,10 +382,7 @@ mod test {
         assert_eq!(t.tokens[0], Token::Literal(Literal::Decimal("42")));
         let mut t = Tokenizer::from("#0x4H");
         t.expect_literal();
-        assert_eq!(
-            t.tokens[0],
-            Token::Literal(Literal::Hexadecimal("4H".into()))
-        );
+        assert_eq!(t.tokens[0], Token::Literal(Literal::Hexadecimal("4H".into())));
         let mut t = Tokenizer::from("#0b010110");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Binary("010110")));
@@ -414,9 +416,7 @@ mod test {
         t.expect_literal();
         assert_eq!(
             t.tokens[0],
-            Token::Literal(Literal::String(
-                "Jajajajaja2498291849102+#amfl929r2jlsamfa3"
-            ))
+            Token::Literal(Literal::String("Jajajajaja2498291849102+#amfl929r2jlsamfa3"))
         );
     }
 
@@ -433,10 +433,7 @@ mod test {
         assert_eq!(t.tokens[0], Token::Literal(Literal::Decimal("-42")));
         t = Tokenizer::from("#0x4H");
         t.expect_literal();
-        assert_eq!(
-            t.tokens[0],
-            Token::Literal(Literal::Hexadecimal("4H".into()))
-        );
+        assert_eq!(t.tokens[0], Token::Literal(Literal::Hexadecimal("4H".into())));
         t = Tokenizer::from("#0b010110");
         t.expect_literal();
         assert_eq!(t.tokens[0], Token::Literal(Literal::Binary("010110")));

@@ -223,8 +223,6 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
         }
     }
 
-    // skips forrmatting the last line
-    #[rustfmt::skip]
     pub(crate) const fn from_jump_instruction(instr: ASMJumpInstruction, dest: W) -> Self {
         use ASMJumpInstruction::*;
         let condition = match instr {
@@ -244,8 +242,6 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
         Self::Jump { to: dest, condition }
     }
 
-  
-
     /// Copy a value from an operand to a register.
     #[inline]
     const fn mov(to: Register, from: Operand<W>, processor: &mut Processor<STACK_SIZE, Self>) {
@@ -259,12 +255,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 
     /// Add the value of an operand (rhs) to a register (acc).
     #[inline]
-    fn add(
-        acc: Register,
-        rhs: Operand<W>,
-        signed: bool,
-        processor: &mut Processor<STACK_SIZE, Self>,
-    ) {
+    fn add(acc: Register, rhs: Operand<W>, signed: bool, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         let b = rhs.resolve(processor);
 
@@ -284,12 +275,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 
     /// Subtract the value of an operand (rhs) from a register (acc).
     #[inline]
-    fn sub(
-        acc: Register,
-        rhs: Operand<W>,
-        signed: bool,
-        processor: &mut Processor<STACK_SIZE, Self>,
-    ) {
+    fn sub(acc: Register, rhs: Operand<W>, signed: bool, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         let b = rhs.resolve(processor);
 
@@ -310,12 +296,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
     /// Multiply the value of an operand (acc) with the value of a register (rhs).
     /// The result is stored in acc.
     #[inline]
-    fn mul(
-        acc: Register,
-        rhs: Operand<W>,
-        signed: bool,
-        processor: &mut Processor<STACK_SIZE, Self>,
-    ) {
+    fn mul(acc: Register, rhs: Operand<W>, signed: bool, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         let b = rhs.resolve(processor);
 
@@ -336,12 +317,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
     /// Divide the value of an operand (acc) by the value of a register (rhs).
     /// The result is stored in acc.
     #[inline]
-    fn div(
-        acc: Register,
-        rhs: Operand<W>,
-        signed: bool,
-        processor: &mut Processor<STACK_SIZE, Self>,
-    ) {
+    fn div(acc: Register, rhs: Operand<W>, signed: bool, processor: &mut Processor<STACK_SIZE, Self>) {
         let a = processor.registers.get_reg(acc);
         let b = rhs.resolve(processor);
 
@@ -358,8 +334,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
             processor.registers.set_reg(acc, a / b);
         }
     }
-    
-    
+
     /// Increment the value in a register by one.
     #[inline]
     fn inc(reg: Register, signed: bool, processor: &mut Processor<STACK_SIZE, Self>) {
@@ -379,7 +354,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
             processor.registers.dec(reg);
         }
     }
-    
+
     /// Sets the signed and zero flags.
     #[inline]
     fn set_signed_zero_flags(val: W, processor: &mut Processor<STACK_SIZE, Self>) {
