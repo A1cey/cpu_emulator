@@ -9,7 +9,9 @@ use emulator_core::{
 use thiserror::Error;
 
 use crate::{
-    instruction_set::{ASMBinaryInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction},
+    instruction_set::{
+        ASMBinaryInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction, Operand,
+    },
     tokenizer::{Literal, Token},
 };
 
@@ -120,7 +122,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
             Some(Token::Label(label)) => match self.labels.get(label.as_str()) {
                 Some(idx) => self
                     .instructions
-                    .push(Instruction::from_jump_instr(instr, (*idx).into())),
+                    .push(Instruction::from_jump_instruction(instr, (*idx).into())),
                 None => self.add_error(ParserError::LabelNotFound {
                     idx: self.idx,
                     label: label.clone(),
@@ -203,8 +205,11 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
                         return self.add_error(ParserError::RegisterParsing(err));
                     }
                 };
-                self.instructions
-                    .push(Instruction::from_binary_reg_instr(instr, acc, rhs));
+                self.instructions.push(Instruction::from_binary_instruction(
+                    instr,
+                    acc,
+                    Operand::Register(rhs),
+                ));
             }
             Some(Token::Literal(lit)) => {
                 let val = match Self::convert_lit_to_val(lit) {
@@ -214,8 +219,11 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
                     }
                 };
 
-                self.instructions
-                    .push(Instruction::from_binary_val_instr(instr, acc, val));
+                self.instructions.push(Instruction::from_binary_instruction(
+                    instr,
+                    acc,
+                    Operand::Value(val),
+                ));
             }
             token => {
                 let token_str = token.map_or_else(String::new, |token| format!("{token:?}"));
@@ -237,7 +245,7 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         };
 
         self.instructions
-            .push(Instruction::from_unary_instr(instr, reg));
+            .push(Instruction::from_unary_instruction(instr, reg));
     }
 }
 

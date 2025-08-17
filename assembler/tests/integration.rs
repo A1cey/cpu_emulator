@@ -1,4 +1,7 @@
-use assembler::{assemble, instruction_set::Instruction};
+use assembler::{
+    assemble,
+    instruction_set::{Instruction, JumpCondition, Operand},
+};
 use emulator_core::{processor::Processor, program::Program, register::Register, word::I32};
 
 #[test]
@@ -19,15 +22,19 @@ fn simple_5x2_multiplication() {
     assert_eq!(
         program,
         Program::<STACK_SIZE, IS>::new(vec![
-            Instruction::MoveVal {
+            Instruction::Mov {
                 to: Register::R0,
-                val: 2.into()
+                from: Operand::Value(2.into())
             },
-            Instruction::AddReg {
+            Instruction::Add {
                 acc: Register::R1,
-                rhs: Register::R0
+                rhs: Operand::Register(Register::R0),
+                signed: false
             },
-            Instruction::Jump { to: 0.into() }
+            Instruction::Jump {
+                to: 0.into(),
+                condition: JumpCondition::Unconditional
+            }
         ])
     );
 
