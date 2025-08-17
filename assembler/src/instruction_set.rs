@@ -14,6 +14,19 @@ pub enum Operand<W: Word> {
     Value(W),
 }
 
+impl<W: Word> Operand<W> {
+    #[inline]
+    const fn resolve<const STACK_SIZE: usize>(
+        self,
+        processor: &Processor<STACK_SIZE, Instruction<STACK_SIZE, W>>,
+    ) -> W {
+        match self {
+            Operand::Register(reg) => processor.registers.get_reg(reg),
+            Operand::Value(val) => val,
+        }
+    }
+}
+
 /// Operand for the instruction set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SignedOperation {
@@ -46,6 +59,29 @@ pub enum JumpCondition {
     GreaterOrEq,
     /// If zero flag or signed flag is set. \[JLE\]
     LessOrEq,
+}
+
+impl JumpCondition {
+    #[inline]
+    const fn check<const STACK_SIZE: usize, W: Word>(
+        self,
+        processor: &Processor<STACK_SIZE, Instruction<STACK_SIZE, W>>,
+    ) -> bool {
+        let flags = &processor.registers;
+        match self {
+            Self::Unconditional => true,
+            Self::Zero => flags.get_flag(Flag::Z),
+            Self::NotZero => !flags.get_flag(Flag::Z),
+            Self::Carry => flags.get_flag(Flag::C),
+            Self::NotCarry => !flags.get_flag(Flag::C),
+            Self::Signed => flags.get_flag(Flag::S),
+            Self::NotSigned => !flags.get_flag(Flag::S),
+            Self::Greater => !flags.get_flag(Flag::Z) && !flags.get_flag(Flag::S),
+            Self::Less => !flags.get_flag(Flag::Z) && flags.get_flag(Flag::S),
+            Self::GreaterOrEq => flags.get_flag(Flag::Z) || !flags.get_flag(Flag::S),
+            Self::LessOrEq => flags.get_flag(Flag::Z) || flags.get_flag(Flag::S),
+        }
+    }
 }
 
 /// Default instruction set for the processor.
@@ -99,16 +135,22 @@ impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instructio
 
     /// Execute an instruction on a processor.
     fn execute(instruction: &Self, processor: &mut Processor<STACK_SIZE, Self>) {
+        use Instruction::*;
+
         match instruction {
-            Self::Nop => (),
-            Self::Mov { to, from } => Self::mov(*to, *from, processor),
-            Self::Add { acc, rhs, signed } => Self::add(*acc, *rhs, *signed, processor),
-            Self::Sub { acc, rhs, signed } => Self::sub(*acc, *rhs, *signed, processor),
-            Self::Mul { acc, rhs, signed } => Self::mul(*acc, *rhs, *signed, processor),
-            Self::Div { acc, rhs, signed } => Self::div(*acc, *rhs, *signed, processor),
-            Self::Inc { reg, signed } => Self::inc(*reg, *signed, processor),
-            Self::Dec { reg, signed } => Self::dec(*reg, *signed, processor),
-            Self::Jump { to, condition } => Self::jmp(*to, *condition, processor),
+            Nop => (),
+            Mov { to, from } => Self::mov(*to, *from, processor),
+            Add { acc, rhs, signed } => Self::add(*acc, *rhs, *signed, processor),
+            Sub { acc, rhs, signed } => Self::sub(*acc, *rhs, *signed, processor),
+            Mul { acc, rhs, signed } => Self::mul(*acc, *rhs, *signed, processor),
+            Div { acc, rhs, signed } => Self::div(*acc, *rhs, *signed, processor),
+            Inc { reg, signed } => Self::inc(*reg, *signed, processor),
+            Dec { reg, signed } => Self::dec(*reg, *signed, processor),
+            Jump { to, condition } => {
+                if condition.check(processor) {
+                    processor.registers.set_reg(Register::PC, *to);
+                }
+            }
         }
     }
 }
@@ -150,104 +192,59 @@ pub(crate) enum ASMJumpInstruction {
 }
 
 impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
+    // skips forrmatting the match
+    #[rustfmt::skip]
     pub(crate) const fn from_binary_instruction(
         instr: ASMBinaryInstruction,
         lhs: Register,
-        rhs: Operand<W>,
+        rhs: Operand<W>
     ) -> Self {
+        use ASMBinaryInstruction::*;
         match instr {
-            ASMBinaryInstruction::Mov => Self::Mov { to: lhs, from: rhs },
-            ASMBinaryInstruction::Add => Self::Add {
-                acc: lhs,
-                rhs,
-                signed: false,
-            },
-            ASMBinaryInstruction::AddS => Self::Add {
-                acc: lhs,
-                rhs,
-                signed: true,
-            },
-            ASMBinaryInstruction::Sub => Self::Sub {
-                acc: lhs,
-                rhs,
-                signed: false,
-            },
-            ASMBinaryInstruction::SubS => Self::Sub {
-                acc: lhs,
-                rhs,
-                signed: true,
-            },
-            ASMBinaryInstruction::Mul => Self::Mul {
-                acc: lhs,
-                rhs,
-                signed: false,
-            },
-            ASMBinaryInstruction::MulS => Self::Mul {
-                acc: lhs,
-                rhs,
-                signed: true,
-            },
-            ASMBinaryInstruction::Div => Self::Div {
-                acc: lhs,
-                rhs,
-                signed: false,
-            },
-            ASMBinaryInstruction::DivS => Self::Div {
-                acc: lhs,
-                rhs,
-                signed: true,
-            },
+            Mov => Self::Mov { to: lhs, from: rhs },
+            Add => Self::Add { acc: lhs, rhs, signed: false },
+            AddS => Self::Add { acc: lhs, rhs, signed: true },
+            Sub => Self::Sub { acc: lhs, rhs, signed: false },
+            SubS => Self::Sub { acc: lhs, rhs, signed: true },
+            Mul => Self::Mul { acc: lhs, rhs, signed: false },
+            MulS => Self::Mul { acc: lhs, rhs, signed: true },
+            Div => Self::Div { acc: lhs, rhs, signed: false },
+            DivS => Self::Div { acc: lhs, rhs, signed: true },
         }
     }
 
     pub(crate) const fn from_unary_instruction(instr: ASMUnaryInstruction, reg: Register) -> Self {
+        use ASMUnaryInstruction::*;
         match instr {
-            ASMUnaryInstruction::Inc => Self::Inc { reg, signed: false },
-            ASMUnaryInstruction::IncS => Self::Inc { reg, signed: true },
-            ASMUnaryInstruction::Dec => Self::Dec { reg, signed: false },
-            ASMUnaryInstruction::DecS => Self::Dec { reg, signed: true },
+            Inc => Self::Inc { reg, signed: false },
+            IncS => Self::Inc { reg, signed: true },
+            Dec => Self::Dec { reg, signed: false },
+            DecS => Self::Dec { reg, signed: true },
         }
     }
 
+    // skips forrmatting the last line
+    #[rustfmt::skip]
     pub(crate) const fn from_jump_instruction(instr: ASMJumpInstruction, dest: W) -> Self {
+        use ASMJumpInstruction::*;
         let condition = match instr {
-            ASMJumpInstruction::Jmp => JumpCondition::Unconditional,
-            ASMJumpInstruction::JZ => JumpCondition::Zero,
-            ASMJumpInstruction::JNZ => JumpCondition::NotZero,
-            ASMJumpInstruction::JC => JumpCondition::Carry,
-            ASMJumpInstruction::JNC => JumpCondition::NotCarry,
-            ASMJumpInstruction::JS => JumpCondition::Signed,
-            ASMJumpInstruction::JNS => JumpCondition::NotSigned,
-            ASMJumpInstruction::JG => JumpCondition::Greater,
-            ASMJumpInstruction::JL => JumpCondition::Less,
-            ASMJumpInstruction::JGE => JumpCondition::GreaterOrEq,
-            ASMJumpInstruction::JLE => JumpCondition::LessOrEq,
+            Jmp => JumpCondition::Unconditional,
+            JZ => JumpCondition::Zero,
+            JNZ => JumpCondition::NotZero,
+            JC => JumpCondition::Carry,
+            JNC => JumpCondition::NotCarry,
+            JS => JumpCondition::Signed,
+            JNS => JumpCondition::NotSigned,
+            JG => JumpCondition::Greater,
+            JL => JumpCondition::Less,
+            JGE => JumpCondition::GreaterOrEq,
+            JLE => JumpCondition::LessOrEq,
         };
 
-        Self::Jump {
-            to: dest,
-            condition,
-        }
+        Self::Jump { to: dest, condition }
     }
 
-    /// Sets the signed and zero flags.
-    #[inline]
-    fn set_signed_zero_flags(val: W, processor: &mut Processor<STACK_SIZE, Self>) {
-        match val.cmp(&(0.into())) {
-            Ordering::Less => {
-                processor.registers.set_flag(Flag::S, true);
-                processor.registers.set_flag(Flag::Z, false);
-            }
-            Ordering::Equal => {
-                processor.registers.set_flag(Flag::S, false);
-                processor.registers.set_flag(Flag::Z, true);
-            }
-            Ordering::Greater => {
-                processor.registers.set_flag(Flag::S, false);
-                processor.registers.set_flag(Flag::Z, false);
-            }
-        }
-    }
+  
 
     /// Copy a value from an operand to a register.
     #[inline]
@@ -268,16 +265,12 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
         signed: bool,
         processor: &mut Processor<STACK_SIZE, Self>,
     ) {
-        let val = match rhs {
-            Operand::Register(reg) => processor.registers.get_reg(reg),
-            Operand::Value(val) => val,
-        };
-
         let a = processor.registers.get_reg(acc);
+        let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_add(val);
-            let carry = a.carry_add(val);
+            let (res, overflow) = a.overflowing_add(b);
+            let carry = a.carry_add(b);
 
             processor.registers.set_reg(acc, res);
             processor.registers.set_flag(Flag::V, overflow);
@@ -285,7 +278,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 
             Self::set_signed_zero_flags(res, processor);
         } else {
-            processor.registers.set_reg(acc, a + val);
+            processor.registers.set_reg(acc, a + b);
         }
     }
 
@@ -297,16 +290,12 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
         signed: bool,
         processor: &mut Processor<STACK_SIZE, Self>,
     ) {
-        let val = match rhs {
-            Operand::Register(reg) => processor.registers.get_reg(reg),
-            Operand::Value(val) => val,
-        };
-
         let a = processor.registers.get_reg(acc);
+        let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_sub(val);
-            let carry = a.carry_sub(val);
+            let (res, overflow) = a.overflowing_sub(b);
+            let carry = a.carry_sub(b);
 
             processor.registers.set_reg(acc, res);
             processor.registers.set_flag(Flag::V, overflow);
@@ -314,7 +303,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 
             Self::set_signed_zero_flags(res, processor);
         } else {
-            processor.registers.set_reg(acc, a - val);
+            processor.registers.set_reg(acc, a - b);
         }
     }
 
@@ -327,16 +316,12 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
         signed: bool,
         processor: &mut Processor<STACK_SIZE, Self>,
     ) {
-        let val = match rhs {
-            Operand::Register(reg) => processor.registers.get_reg(reg),
-            Operand::Value(val) => val,
-        };
-
         let a = processor.registers.get_reg(acc);
+        let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_mul(val);
-            let carry = a.carry_mul(val);
+            let (res, overflow) = a.overflowing_mul(b);
+            let carry = a.carry_mul(b);
 
             processor.registers.set_reg(acc, res);
             processor.registers.set_flag(Flag::V, overflow);
@@ -344,7 +329,7 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 
             Self::set_signed_zero_flags(res, processor);
         } else {
-            processor.registers.set_reg(acc, a * val);
+            processor.registers.set_reg(acc, a * b);
         }
     }
 
@@ -357,16 +342,12 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
         signed: bool,
         processor: &mut Processor<STACK_SIZE, Self>,
     ) {
-        let val = match rhs {
-            Operand::Register(reg) => processor.registers.get_reg(reg),
-            Operand::Value(val) => val,
-        };
-
         let a = processor.registers.get_reg(acc);
+        let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_div(val);
-            let carry = overflow; // this is the same as a.carry_div(val)
+            let (res, overflow) = a.overflowing_div(b);
+            let carry = overflow; // this is the same as a.carry_div(b)
 
             processor.registers.set_reg(acc, res);
             processor.registers.set_flag(Flag::V, overflow);
@@ -374,10 +355,11 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
 
             Self::set_signed_zero_flags(res, processor);
         } else {
-            processor.registers.set_reg(acc, a / val);
+            processor.registers.set_reg(acc, a / b);
         }
     }
-
+    
+    
     /// Increment the value in a register by one.
     #[inline]
     fn inc(reg: Register, signed: bool, processor: &mut Processor<STACK_SIZE, Self>) {
@@ -397,32 +379,23 @@ impl<const STACK_SIZE: usize, W: Word> Instruction<STACK_SIZE, W> {
             processor.registers.dec(reg);
         }
     }
-
-    /// Set program counter to value, effectively jumping to the instruction at this point in the program.
+    
+    /// Sets the signed and zero flags.
     #[inline]
-    const fn jmp(to: W, condition: JumpCondition, processor: &mut Processor<STACK_SIZE, Self>) {
-        if match condition {
-            JumpCondition::Unconditional => true,
-            JumpCondition::Zero => processor.registers.get_flag(Flag::Z),
-            JumpCondition::NotZero => !processor.registers.get_flag(Flag::Z),
-            JumpCondition::Carry => processor.registers.get_flag(Flag::C),
-            JumpCondition::NotCarry => !processor.registers.get_flag(Flag::C),
-            JumpCondition::Signed => processor.registers.get_flag(Flag::S),
-            JumpCondition::NotSigned => !processor.registers.get_flag(Flag::S),
-            JumpCondition::Greater => {
-                !processor.registers.get_flag(Flag::Z) && !processor.registers.get_flag(Flag::S)
+    fn set_signed_zero_flags(val: W, processor: &mut Processor<STACK_SIZE, Self>) {
+        match val.cmp(&(0.into())) {
+            Ordering::Less => {
+                processor.registers.set_flag(Flag::S, true);
+                processor.registers.set_flag(Flag::Z, false);
             }
-            JumpCondition::Less => {
-                !processor.registers.get_flag(Flag::Z) && processor.registers.get_flag(Flag::S)
+            Ordering::Equal => {
+                processor.registers.set_flag(Flag::S, false);
+                processor.registers.set_flag(Flag::Z, true);
             }
-            JumpCondition::GreaterOrEq => {
-                processor.registers.get_flag(Flag::Z) || !processor.registers.get_flag(Flag::S)
+            Ordering::Greater => {
+                processor.registers.set_flag(Flag::S, false);
+                processor.registers.set_flag(Flag::Z, false);
             }
-            JumpCondition::LessOrEq => {
-                processor.registers.get_flag(Flag::Z) || processor.registers.get_flag(Flag::S)
-            }
-        } {
-            processor.registers.set_reg(Register::PC, to);
         }
     }
 }
