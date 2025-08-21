@@ -2,7 +2,6 @@ use core::num::ParseIntError;
 use std::collections::HashMap;
 
 use emulator_core::{
-    program::Program,
     register::{Register, RegisterError},
     word::Word,
 };
@@ -14,15 +13,15 @@ use crate::{
 };
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub struct Parser<'a, const STACK_SIZE: usize, W: Word> {
+pub struct Parser<'a, W: Word> {
     tokens: &'a [Token<'a>],
-    instructions: Vec<Instruction<STACK_SIZE, W>>,
+    instructions: Vec<Instruction<W>>,
     errors: Option<Vec<ParserError>>,
     idx: usize,
     labels: HashMap<&'a str, usize>,
 }
 
-impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
+impl<'a, W: Word> Parser<'a, W> {
     fn new(tokens: &'a [Token<'a>]) -> Self {
         Self {
             tokens,
@@ -33,14 +32,12 @@ impl<'a, const STACK_SIZE: usize, W: Word> Parser<'a, STACK_SIZE, W> {
         }
     }
 
-    pub(crate) fn parse(
-        tokens: &'a [Token<'a>],
-    ) -> Result<Program<STACK_SIZE, Instruction<STACK_SIZE, W>>, Vec<ParserError>> {
-        let mut parser = Parser::<STACK_SIZE, W>::new(tokens);
+    pub(crate) fn parse(tokens: &'a [Token<'a>]) -> Result<Vec<Instruction<W>>, Vec<ParserError>> {
+        let mut parser = Parser::new(tokens);
         parser.run();
 
         match parser.errors {
-            None => Ok(Program::new(parser.instructions)),
+            None => Ok(parser.instructions),
             Some(err) => Err(err),
         }
     }

@@ -1,34 +1,58 @@
 use core::ops::Deref;
+use std::marker::PhantomData;
 use thiserror::Error;
 
 use crate::instruction_set::InstructionSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
-#[repr(transparent)]
-pub struct Program<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>>(Vec<IS::Instruction>);
+pub struct Program<IS, T>(T, PhantomData<IS>);
 
-impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Deref for Program<STACK_SIZE, IS> {
-    type Target = Vec<IS::Instruction>;
+impl<T, IS> Deref for Program<IS, T>
+where
+    IS: InstructionSet,
+    T: Deref<Target = [IS::Instruction]>,
+{
+    type Target = [IS::Instruction];
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet<STACK_SIZE>> Program<STACK_SIZE, IS> {
-    pub fn new(instructions: impl IntoIterator<Item = IS::Instruction>) -> Self {
-        Self(instructions.into_iter().collect())
+impl<IS, T> From<T> for Program<IS, T>
+where
+    IS: InstructionSet,
+    T: Deref<Target = [IS::Instruction]>,
+{
+    fn from(instructions: T) -> Self {
+        Self(instructions, PhantomData)
+    }
+}
+
+impl<T, IS> Program<IS, T>
+where
+    IS: InstructionSet,
+    T: Deref<Target = [IS::Instruction]>,
+{
+    /// Creates a new program from the provided instructions.
+    #[must_use]
+    pub fn new(instructions: T) -> Self {
+        instructions.into()
     }
 
-    /// Returns instruction at the provided index.
+    /// Returns the instruction at the provided index.
     ///
     /// # Errors
     /// Returns `PCOutOfBounds` error if the program counter is not in bounds.
-    pub fn fetch_instruction(&self, pc: usize) -> Result<&IS::Instruction, ProgramError> {
-        self.get(pc).ok_or(ProgramError::PCOutOfBounds {
-            pc,
-            program_len: self.len(),
-        })
+    #[inline]
+    pub fn fetch_instruction(&self, pc: usize) -> Result<IS::Instruction, ProgramError> {
+        match self.get(pc) {
+            Some(instruction) => Ok(instruction.to_owned()),
+            None => Err(ProgramError::PCOutOfBounds {
+                pc,
+                program_len: self.len(),
+            }),
+        }
     }
 }
 
