@@ -4,18 +4,24 @@
 //! It has 16 general use registers, a program counter (pc), a stack pointer (sp) and 4 flags (carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z)).
 //! It also has a stack of size `STACK_SIZE`.
 //!
+//! The processor can be created by using the [`builder()`](Processor::builder()) method or by using the [`new()`](Processor::new()) method.
+//! Using the builder pattern allows specifying the initial registers, stack and program.
+//! Any unspecifed values will be initialized to their default values.
+//! Using the [`new()`](Processor::new()) method just creates a default processor.
+//! The program is then loaded using the [`load_program()`](Processor::load_program()) method.
+//!
 //! To run a loaded program two methods are provided:
-//! - To load a program use [`load_program()`](Processor::load_program()).
 //! - To run the entire program use [`run_program()`](Processor::run_program()).
 //! - To run only the next instruction use [`execute_next_instruction()`](Processor::execute_next_instruction()).
-use std::ops::Deref;
+use core::fmt::{Display, Formatter};
+use core::ops::Deref;
 
 use crate::instruction_set::InstructionSet;
 use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};
 use crate::stack::Stack;
 
-#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Processor<'a, const STACK_SIZE: usize, IS, P>
 where
     IS: InstructionSet,
@@ -33,7 +39,7 @@ where
 {
     #[must_use]
     #[inline]
-    pub fn builder() -> ProcessorBuilder<'a, STACK_SIZE, IS, P> {
+    pub const fn builder() -> ProcessorBuilder<'a, STACK_SIZE, IS, P> {
         ProcessorBuilder::new()
     }
 
@@ -52,7 +58,7 @@ where
     ///
     /// The program cannot be changed after being loaded. To make changes, an updated or entirely new program has to be loaded.
     #[inline]
-    pub fn load_program(&mut self, program: &'a Program<IS, P>) {
+    pub const fn load_program(&mut self, program: &'a Program<IS, P>) {
         self.program = Some(program);
     }
 
@@ -85,17 +91,18 @@ where
 
         IS::execute(instruction, self);
 
+        println!("{self}");
         Ok(())
     }
 }
 
-impl<'a, const STACK_SIZE: usize, IS, P> Default for Processor<'a, STACK_SIZE, IS, P>
+impl<const STACK_SIZE: usize, IS, P> Display for Processor<'_, STACK_SIZE, IS, P>
 where
     IS: InstructionSet,
     P: Deref<Target = [IS::Instruction]>,
 {
-    fn default() -> Self {
-        Self::new()
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "Registers: \n{}\nStack: \t\t{}", self.registers, self.stack)
     }
 }
 
@@ -117,7 +124,7 @@ where
 {
     /// Creates a new `ProcessorBuilder` with registers, stack and program set to `None`.
     #[inline]
-    fn new() -> Self {
+    const fn new() -> Self {
         Self {
             registers: None,
             stack: None,
@@ -128,7 +135,7 @@ where
     /// Sets the registers for the `ProcessorBuilder`.
     #[must_use]
     #[inline]
-    pub fn with_registers(mut self, registers: Registers<IS::W>) -> Self {
+    pub const fn with_registers(mut self, registers: Registers<IS::W>) -> Self {
         self.registers = Some(registers);
         self
     }
@@ -136,7 +143,7 @@ where
     /// Sets the stack for the `ProcessorBuilder`.
     #[must_use]
     #[inline]
-    pub fn with_stack(mut self, stack: Stack<STACK_SIZE, IS>) -> Self {
+    pub const fn with_stack(mut self, stack: Stack<STACK_SIZE, IS>) -> Self {
         self.stack = Some(stack);
         self
     }
@@ -144,7 +151,7 @@ where
     /// Sets the program for the `ProcessorBuilder`.
     #[must_use]
     #[inline]
-    pub fn with_program(mut self, program: &'a Program<IS, P>) -> Self {
+    pub const fn with_program(mut self, program: &'a Program<IS, P>) -> Self {
         self.program = Some(program);
         self
     }
@@ -152,7 +159,7 @@ where
     /// Builds the `Processor` with the given registers, stack and program.
     #[must_use]
     #[inline]
-    pub fn build(self) -> Processor<'a, STACK_SIZE, IS, P> {
+    pub  fn build(self) -> Processor<'a, STACK_SIZE, IS, P> {
         Processor {
             registers: self.registers.unwrap_or_default(),
             stack: self.stack.unwrap_or_default(),

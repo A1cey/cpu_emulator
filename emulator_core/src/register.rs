@@ -100,7 +100,8 @@ impl<W: Word> Registers<W> {
             .general
             .iter()
             .map(ToString::to_string)
-            .fold(String::new(), |acc, reg| acc + "," + &reg);
+            .collect::<Vec<_>>()
+            .join(", ");
         format!("[{s}]")
     }
 
@@ -109,7 +110,7 @@ impl<W: Word> Registers<W> {
 
         s.push_str(format!("C: {}, ", self.flags[0]).as_str());
         s.push_str(format!("S: {}, ", self.flags[1]).as_str());
-        s.push_str(format!("V: {}", self.flags[2]).as_str());
+        s.push_str(format!("V: {}, ", self.flags[2]).as_str());
         s.push_str(format!("Z: {}", self.flags[3]).as_str());
         format!("[{s}]")
     }

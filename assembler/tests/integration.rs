@@ -2,13 +2,13 @@ use assembler::{
     assemble,
     instruction_set::{Instruction, JumpCondition, Operand},
 };
-use emulator_core::{processor::Processor, program::Program, register::Register, stack::Stack, word::I32};
+use emulator_core::{processor::Processor, program::Program, register::Register, word::I32};
 
 #[test]
 fn simple_5x2_multiplication() {
     const STACK_SIZE: usize = 1024;
     type IS = Instruction<I32>;
-
+    
     let program = assemble::<I32>(
         "
         .input
@@ -39,6 +39,8 @@ fn simple_5x2_multiplication() {
     );
 
     let mut processor = Processor::<STACK_SIZE, _, _>::builder().with_program(&program).build();
+
+    println!("{processor}");
 
     for _ in 0..14 {
         assert!(processor.execute_next_instruction().is_ok());

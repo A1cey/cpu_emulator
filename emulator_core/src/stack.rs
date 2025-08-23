@@ -1,4 +1,4 @@
-use core::fmt::Debug;
+use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Deref, DerefMut};
 use thiserror::Error;
 
@@ -25,6 +25,23 @@ impl<const STACK_SIZE: usize, IS: InstructionSet> DerefMut for Stack<STACK_SIZE,
 impl<const STACK_SIZE: usize, IS: InstructionSet> Default for Stack<STACK_SIZE, IS> {
     fn default() -> Self {
         Self::new()
+    }
+}
+
+impl<const STACK_SIZE: usize, IS: InstructionSet> Display for Stack<STACK_SIZE, IS> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "[")?;
+
+        let mut iter = self.iter();
+        if let Some(val) = iter.next() {
+            write!(f, "{val}")?;
+
+            for val in iter {
+                write!(f, ", {val}")?;
+            }
+        }
+
+        write!(f, "]")
     }
 }
 

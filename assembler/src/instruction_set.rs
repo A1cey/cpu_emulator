@@ -22,8 +22,8 @@ impl<W: Word> Operand<W> {
         P: Deref<Target = [Instruction<W>]>,
     {
         match self {
-            Operand::Register(reg) => processor.registers.get_reg(reg),
-            Operand::Value(val) => val,
+            Self::Register(reg) => processor.registers.get_reg(reg),
+            Self::Value(val) => val,
         }
     }
 }
@@ -31,8 +31,8 @@ impl<W: Word> Operand<W> {
 /// Operand for the instruction set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub enum SignedOperation {
-    Signed(),
-    Unsigned(),
+    Signed,
+    Unsigned,
 }
 
 /// Jump condition for the instruction set.
@@ -86,8 +86,89 @@ impl JumpCondition {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
+pub(crate) enum ASMBinaryInstruction {
+    Mov,
+    Add,
+    AddS,
+    Sub,
+    SubS,
+    Mul,
+    MulS,
+    Div,
+    DivS,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
+pub(crate) enum ASMUnaryInstruction {
+    Inc,
+    IncS,
+    Dec,
+    DecS,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
+pub(crate) enum ASMJumpInstruction {
+    Jmp,
+    Jz,
+    Jnz,
+    Jc,
+    Jnc,
+    Js,
+    Jns,
+    Jg,
+    Jl,
+    Jge,
+    Jle,
+}
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
+pub(crate) enum ASMInstruction {
+    Nop,
+    Unary(ASMUnaryInstruction),
+    Binary(ASMBinaryInstruction),
+    Jump(ASMJumpInstruction),
+}
+
+impl TryFrom<&str> for ASMInstruction {
+    type Error = ();
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        let inst = match value {
+            "NOP" => Self::Nop,
+            "MOV" => Self::Binary(ASMBinaryInstruction::Mov),
+            "ADD" => Self::Binary(ASMBinaryInstruction::Add),
+            "ADDS" => Self::Binary(ASMBinaryInstruction::AddS),
+            "SUB" => Self::Binary(ASMBinaryInstruction::Sub),
+            "SUBS" => Self::Binary(ASMBinaryInstruction::SubS),
+            "MUL" => Self::Binary(ASMBinaryInstruction::Mul),
+            "MULS" => Self::Binary(ASMBinaryInstruction::MulS),
+            "DIV" => Self::Binary(ASMBinaryInstruction::Div),
+            "DIVS" => Self::Binary(ASMBinaryInstruction::DivS),
+            "INC" => Self::Unary(ASMUnaryInstruction::Inc),
+            "INCS" => Self::Unary(ASMUnaryInstruction::IncS),
+            "DEC" => Self::Unary(ASMUnaryInstruction::Dec),
+            "DECS" => Self::Unary(ASMUnaryInstruction::DecS),
+            "JMP" => Self::Jump(ASMJumpInstruction::Jmp),
+            "JZ" => Self::Jump(ASMJumpInstruction::Jz),
+            "JNZ" => Self::Jump(ASMJumpInstruction::Jnz),
+            "JC" => Self::Jump(ASMJumpInstruction::Jc),
+            "JNC" => Self::Jump(ASMJumpInstruction::Jnc),
+            "JS" => Self::Jump(ASMJumpInstruction::Js),
+            "JNS" => Self::Jump(ASMJumpInstruction::Jns),
+            "JG" => Self::Jump(ASMJumpInstruction::Jg),
+            "JL" => Self::Jump(ASMJumpInstruction::Jl),
+            "JGE" => Self::Jump(ASMJumpInstruction::Jge),
+            "JLE" => Self::Jump(ASMJumpInstruction::Jle),
+            _ => return Err(()),
+        };
+
+        Ok(inst)
+    }
+}
+
 /// Default instruction set for the processor.
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
 pub enum Instruction<W: Word> {
     /// No operation. \[NOP\]
     Nop,
@@ -140,7 +221,7 @@ impl<W: Word> InstructionSet for Instruction<W> {
         instruction: Self,
         processor: &mut Processor<STACK_SIZE, Self, P>,
     ) {
-        use Instruction::*;
+        use Instruction::{Add, Dec, Div, Inc, Jump, Mov, Mul, Nop, Sub};
 
         match instruction {
             Nop => (),
@@ -160,42 +241,6 @@ impl<W: Word> InstructionSet for Instruction<W> {
     }
 }
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub(crate) enum ASMBinaryInstruction {
-    Mov,
-    Add,
-    AddS,
-    Sub,
-    SubS,
-    Mul,
-    MulS,
-    Div,
-    DivS,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub(crate) enum ASMUnaryInstruction {
-    Inc,
-    IncS,
-    Dec,
-    DecS,
-}
-
-#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
-pub(crate) enum ASMJumpInstruction {
-    Jmp,
-    JZ,
-    JNZ,
-    JC,
-    JNC,
-    JS,
-    JNS,
-    JG,
-    JL,
-    JGE,
-    JLE,
-}
-
 impl<W: Word> Instruction<W> {
     // skips forrmatting the match
     #[rustfmt::skip]
@@ -204,7 +249,7 @@ impl<W: Word> Instruction<W> {
         lhs: Register,
         rhs: Operand<W>
     ) -> Self {
-        use ASMBinaryInstruction::*;
+        use ASMBinaryInstruction::{Mov, Add, AddS, Sub, SubS, Mul, MulS, Div, DivS};
         match instr {
             Mov => Self::Mov { to: lhs, from: rhs },
             Add => Self::Add { acc: lhs, rhs, signed: false },
@@ -219,7 +264,7 @@ impl<W: Word> Instruction<W> {
     }
 
     pub(crate) const fn from_unary_instruction(instr: ASMUnaryInstruction, reg: Register) -> Self {
-        use ASMUnaryInstruction::*;
+        use ASMUnaryInstruction::{Dec, DecS, Inc, IncS};
         match instr {
             Inc => Self::Inc { reg, signed: false },
             IncS => Self::Inc { reg, signed: true },
@@ -229,19 +274,19 @@ impl<W: Word> Instruction<W> {
     }
 
     pub(crate) const fn from_jump_instruction(instr: ASMJumpInstruction, dest: W) -> Self {
-        use ASMJumpInstruction::*;
+        use ASMJumpInstruction::{Jc, Jg, Jge, Jl, Jle, Jmp, Jnc, Jns, Jnz, Js, Jz};
         let condition = match instr {
             Jmp => JumpCondition::Unconditional,
-            JZ => JumpCondition::Zero,
-            JNZ => JumpCondition::NotZero,
-            JC => JumpCondition::Carry,
-            JNC => JumpCondition::NotCarry,
-            JS => JumpCondition::Signed,
-            JNS => JumpCondition::NotSigned,
-            JG => JumpCondition::Greater,
-            JL => JumpCondition::Less,
-            JGE => JumpCondition::GreaterOrEq,
-            JLE => JumpCondition::LessOrEq,
+            Jz => JumpCondition::Zero,
+            Jnz => JumpCondition::NotZero,
+            Jc => JumpCondition::Carry,
+            Jnc => JumpCondition::NotCarry,
+            Js => JumpCondition::Signed,
+            Jns => JumpCondition::NotSigned,
+            Jg => JumpCondition::Greater,
+            Jl => JumpCondition::Less,
+            Jge => JumpCondition::GreaterOrEq,
+            Jle => JumpCondition::LessOrEq,
         };
 
         Self::Jump { to: dest, condition }
@@ -274,14 +319,14 @@ impl<W: Word> Instruction<W> {
         let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_add(b);
+            let (result, overflow) = a.overflowing_add(b);
             let carry = a.carry_add(b);
 
-            processor.registers.set_reg(acc, res);
+            processor.registers.set_reg(acc, result);
             processor.registers.set_flag(Flag::V, overflow);
             processor.registers.set_flag(Flag::C, carry);
 
-            Self::set_signed_zero_flags(res, processor);
+            Self::set_signed_zero_flags(result, processor);
         } else {
             processor.registers.set_reg(acc, a + b);
         }
@@ -299,14 +344,14 @@ impl<W: Word> Instruction<W> {
         let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_sub(b);
+            let (result, overflow) = a.overflowing_sub(b);
             let carry = a.carry_sub(b);
 
-            processor.registers.set_reg(acc, res);
+            processor.registers.set_reg(acc, result);
             processor.registers.set_flag(Flag::V, overflow);
             processor.registers.set_flag(Flag::C, carry);
 
-            Self::set_signed_zero_flags(res, processor);
+            Self::set_signed_zero_flags(result, processor);
         } else {
             processor.registers.set_reg(acc, a - b);
         }
@@ -325,14 +370,14 @@ impl<W: Word> Instruction<W> {
         let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_mul(b);
+            let (result, overflow) = a.overflowing_mul(b);
             let carry = a.carry_mul(b);
 
-            processor.registers.set_reg(acc, res);
+            processor.registers.set_reg(acc, result);
             processor.registers.set_flag(Flag::V, overflow);
             processor.registers.set_flag(Flag::C, carry);
 
-            Self::set_signed_zero_flags(res, processor);
+            Self::set_signed_zero_flags(result, processor);
         } else {
             processor.registers.set_reg(acc, a * b);
         }
@@ -351,14 +396,14 @@ impl<W: Word> Instruction<W> {
         let b = rhs.resolve(processor);
 
         if signed {
-            let (res, overflow) = a.overflowing_div(b);
+            let (result, overflow) = a.overflowing_div(b);
             let carry = overflow; // this is the same as a.carry_div(b)
 
-            processor.registers.set_reg(acc, res);
+            processor.registers.set_reg(acc, result);
             processor.registers.set_flag(Flag::V, overflow);
             processor.registers.set_flag(Flag::C, carry);
 
-            Self::set_signed_zero_flags(res, processor);
+            Self::set_signed_zero_flags(result, processor);
         } else {
             processor.registers.set_reg(acc, a / b);
         }

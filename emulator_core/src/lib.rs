@@ -34,17 +34,22 @@
 //! # use emulator_core::instruction_set::InstructionSet;
 //! # use emulator_core::word::{I32, Word};
 //! # use core::marker::PhantomData;
+//! # use core::ops::Deref;
 //! #
-//! # #[derive(Debug, PartialEq, Eq, Clone, Hash)]
-//! # struct Instruction<const STACK_SIZE: usize, W: Word> (PhantomData<W>);
+//! # #[derive(Debug, PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash)]
+//! # struct Instruction<W: Word> (PhantomData<W>);
 //! #
-//! # impl<const STACK_SIZE: usize, W: Word> InstructionSet<STACK_SIZE> for Instruction<STACK_SIZE, W> {
+//! # impl<W: Word> InstructionSet for Instruction<W> {
 //! #     type Instruction = Self;
 //! #     type W = W;
-//! #     fn execute(instruction: &Self, processor: &mut Processor<STACK_SIZE, Self>) {}
+//! #     fn execute<const STACK_SIZE: usize, P: Deref<Target = [Self::Instruction]>>(
+//! #         instruction: Self::Instruction,
+//! #         processor: &mut Processor<STACK_SIZE, Self, P>
+//! #     ) {}
 //! # }
 //! #
-//! # let mut processor = Processor::<2048, Instruction<2048, I32>>::new();
+//! # type IS = Instruction<I32>;
+//! # let mut processor = Processor::<2048, IS, Vec<<IS as InstructionSet>::Instruction>>::new();
 //! let r0 = processor.registers.get_reg(Register::R0);
 //! processor.registers.set_reg(Register::R1, r0);
 //!

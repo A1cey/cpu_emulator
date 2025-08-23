@@ -8,7 +8,9 @@ use emulator_core::{
 use thiserror::Error;
 
 use crate::{
-    instruction_set::{ASMBinaryInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction, Operand},
+    instruction_set::{
+        ASMBinaryInstruction, ASMInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction, Operand,
+    },
     tokenizer::{Literal, Token},
 };
 
@@ -76,40 +78,17 @@ impl<'a, W: Word> Parser<'a, W> {
         self.errors.get_or_insert_default().push(err);
     }
 
-    fn parse_instruction(&mut self, inst: &str) {
-        use ASMBinaryInstruction::*;
-        use ASMJumpInstruction::*;
-        use ASMUnaryInstruction::*;
-
-        match inst {
-            "NOP" => self.instructions.push(Instruction::Nop),
-            "MOV" => self.expect_binary_instruction(Mov),
-            "ADD" => self.expect_binary_instruction(Add),
-            "ADDS" => self.expect_binary_instruction(AddS),
-            "SUB" => self.expect_binary_instruction(Sub),
-            "SUBS" => self.expect_binary_instruction(SubS),
-            "MUL" => self.expect_binary_instruction(Mul),
-            "MULS" => self.expect_binary_instruction(MulS),
-            "DIV" => self.expect_binary_instruction(Div),
-            "DIVS" => self.expect_binary_instruction(DivS),
-            "INC" => self.expect_unary_instruction(Inc),
-            "INCS" => self.expect_unary_instruction(IncS),
-            "DEC" => self.expect_unary_instruction(Dec),
-            "DECS" => self.expect_unary_instruction(DecS),
-            "JMP" => self.expect_destination(Jmp),
-            "JZ" => self.expect_destination(JZ),
-            "JNZ" => self.expect_destination(JNZ),
-            "JC" => self.expect_destination(JC),
-            "JNC" => self.expect_destination(JNC),
-            "JS" => self.expect_destination(JS),
-            "JNS" => self.expect_destination(JNS),
-            "JG" => self.expect_destination(JG),
-            "JL" => self.expect_destination(JL),
-            "JGE" => self.expect_destination(JGE),
-            "JLE" => self.expect_destination(JLE),
-            _ => self.add_error(ParserError::UnknownInstruction {
+    fn parse_instruction(&mut self, instruction: &str) {
+        match instruction.try_into() {
+            Ok(inst) => match inst {
+                ASMInstruction::Nop => self.instructions.push(Instruction::Nop),
+                ASMInstruction::Unary(inst) => self.expect_unary_instruction(inst),
+                ASMInstruction::Binary(inst) => self.expect_binary_instruction(inst),
+                ASMInstruction::Jump(inst) => self.expect_destination(inst),
+            },
+            Err(()) => self.add_error(ParserError::UnknownInstruction {
                 idx: self.idx,
-                inst: inst.to_string(),
+                inst: instruction.to_string(),
             }),
         }
     }

@@ -46,13 +46,15 @@ where
     /// Returns `PCOutOfBounds` error if the program counter is not in bounds.
     #[inline]
     pub fn fetch_instruction(&self, pc: usize) -> Result<IS::Instruction, ProgramError> {
-        match self.get(pc) {
-            Some(instruction) => Ok(instruction.to_owned()),
-            None => Err(ProgramError::PCOutOfBounds {
-                pc,
-                program_len: self.len(),
-            }),
-        }
+        self.get(pc).map_or_else(
+            || {
+                Err(ProgramError::PCOutOfBounds {
+                    pc,
+                    program_len: self.len(),
+                })
+            },
+            |instruction| Ok(instruction.to_owned()),
+        )
     }
 }
 
