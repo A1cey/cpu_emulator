@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-emulator_core = {path = "../emulator_core"}
+emulator_core = {path = "../emulator_core", features = ["alloc"]}
 thiserror = {workspace = true}
 
 [lib]

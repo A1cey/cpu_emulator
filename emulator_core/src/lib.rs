@@ -56,9 +56,16 @@
 //! let overflow = processor.registers.get_flag(Flag::V);
 //! ```
 
+#![no_std]
+
+#![cfg(feature = "alloc")]
+extern crate alloc;
+
 pub mod instruction_set;
 pub mod processor;
 pub mod program;
 pub mod register;
 pub mod stack;
 pub mod word;
+
+mod helper;

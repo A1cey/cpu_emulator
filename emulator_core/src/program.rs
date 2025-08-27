@@ -1,5 +1,5 @@
 use core::ops::Deref;
-use std::marker::PhantomData;
+use core::marker::PhantomData;
 use thiserror::Error;
 
 use crate::instruction_set::InstructionSet;
@@ -53,7 +53,7 @@ where
                     program_len: self.len(),
                 })
             },
-            |instruction| Ok(instruction.to_owned()),
+            |instruction| Ok(*instruction),
         )
     }
 }

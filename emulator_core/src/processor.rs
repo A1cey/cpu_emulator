@@ -91,7 +91,6 @@ where
 
         IS::execute(instruction, self);
 
-        println!("{self}");
         Ok(())
     }
 }
@@ -101,7 +100,7 @@ where
     IS: InstructionSet,
     P: Deref<Target = [IS::Instruction]>,
 {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(f, "Registers: \n{}\nStack: \t\t{}", self.registers, self.stack)
     }
 }

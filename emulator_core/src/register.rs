@@ -2,7 +2,11 @@ use core::fmt::Debug;
 use core::str::FromStr;
 use thiserror::Error;
 
+use crate::helper::FmtArray;
 use crate::word::Word;
+
+#[cfg(feature = "alloc")]
+use alloc::string::{String, ToString};
 
 const GENERAL_REGISTER_COUNT: usize = 16;
 
@@ -94,37 +98,17 @@ impl<W: Word> Registers<W> {
             _ => self.general[reg as usize] -= 1.into(),
         }
     }
-
-    fn fmt_general_registers(&self) -> String {
-        let s = self
-            .general
-            .iter()
-            .map(ToString::to_string)
-            .collect::<Vec<_>>()
-            .join(", ");
-        format!("[{s}]")
-    }
-
-    fn fmt_flags(&self) -> String {
-        let mut s = String::new();
-
-        s.push_str(format!("C: {}, ", self.flags[0]).as_str());
-        s.push_str(format!("S: {}, ", self.flags[1]).as_str());
-        s.push_str(format!("V: {}, ", self.flags[2]).as_str());
-        s.push_str(format!("Z: {}", self.flags[3]).as_str());
-        format!("[{s}]")
-    }
 }
 
-impl<W: Word> ::core::fmt::Display for Registers<W> {
-    fn fmt(&self, f: &mut ::core::fmt::Formatter<'_>) -> Result<(), ::core::fmt::Error> {
-        write!(
+impl<W: Word> core::fmt::Display for Registers<W> {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> Result<(), core::fmt::Error> {
+        write!(f, "general:\t")?;
+        writeln!(f, "{}", FmtArray(self.general.as_slice()))?;
+        writeln!(f, "pc:\t\t{}\nsp:\t\t{}", self.pc, self.sp)?;
+        writeln!(
             f,
-            "general:\t{}\npc:\t\t{}\nsp:\t\t{}\nflags:\t\t{}",
-            self.fmt_general_registers(),
-            self.pc,
-            self.sp,
-            self.fmt_flags()
+            "flags:\t\t[C: {}, S: {}, V: {}, Z: {}]",
+            self.flags[0], self.flags[1], self.flags[2], self.flags[3]
         )
     }
 }
@@ -174,9 +158,14 @@ impl FromStr for Register {
             "R15" | "r15" => Ok(Self::R15),
             "PC" | "pc" => Ok(Self::PC),
             "SP" | "sp" => Ok(Self::SP),
-            _ => Err(RegisterError::ConversionFailed {
-                input: value.to_string(),
-            }),
+            _ => Err(
+                #[cfg(feature = "alloc")]
+                RegisterError::ConversionFailed {
+                    input: value.to_string(),
+                },
+                #[cfg(not(feature = "alloc"))]
+                RegisterError::ConversionFailed,
+            ),
         }
     }
 }
@@ -196,6 +185,10 @@ pub enum Flag {
 
 #[derive(Debug, Error, Clone, PartialEq, Eq, Hash)]
 pub enum RegisterError {
+    #[cfg(feature = "alloc")]
     #[error("Failed to convert {input} into a register.")]
     ConversionFailed { input: String },
+    #[cfg(not(feature = "alloc"))]
+    #[error("Invalid register name. Conversion into register failed.")]
+    ConversionFailed,
 }

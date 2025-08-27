@@ -1,8 +1,8 @@
+use crate::helper;
+use crate::instruction_set::InstructionSet;
 use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Deref, DerefMut};
 use thiserror::Error;
-
-use crate::instruction_set::InstructionSet;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -29,19 +29,8 @@ impl<const STACK_SIZE: usize, IS: InstructionSet> Default for Stack<STACK_SIZE, 
 }
 
 impl<const STACK_SIZE: usize, IS: InstructionSet> Display for Stack<STACK_SIZE, IS> {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "[")?;
-
-        let mut iter = self.iter();
-        if let Some(val) = iter.next() {
-            write!(f, "{val}")?;
-
-            for val in iter {
-                write!(f, ", {val}")?;
-            }
-        }
-
-        write!(f, "]")
+    fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), core::fmt::Error> {
+        write!(f, "{}", helper::FmtArray(self.deref().as_slice()))
     }
 }
 
