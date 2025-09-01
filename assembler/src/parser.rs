@@ -98,9 +98,17 @@ impl<'a, W: Word> Parser<'a, W> {
 
         if let Some(Token::Label(label)) = self.tokens.get(self.idx) {
             match self.labels.get(label.as_str()) {
-                Some(&idx) => self
-                    .instructions
-                    .push(Instruction::from_jump_instruction(instr, idx.into())),
+                Some(&idx) => match idx.try_into() {
+                    Ok(idx) => {
+                        self.instructions.push(Instruction::from_jump_instruction(instr, idx));
+                    }
+                    Err(_) => {
+                        self.add_error(ParserError::LabelIndexToWordConversionFailed {
+                            idx: self.idx,
+                            label: label.clone(),
+                        });
+                    }
+                },
                 None => self.add_error(ParserError::LabelNotFound {
                     idx: self.idx,
                     label: label.clone(),
@@ -225,4 +233,6 @@ pub enum ParserError {
     CannotConvertStrToVal,
     #[error("Label \".{label}\" not found. Needed at {idx}.")]
     LabelNotFound { idx: usize, label: String },
+    #[error("Index {idx} of label \".{label}\" cannot be converted to word.")]
+    LabelIndexToWordConversionFailed { idx: usize, label: String },
 }

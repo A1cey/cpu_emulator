@@ -2,17 +2,16 @@ use core::fmt::{Debug, Display};
 use core::num::ParseIntError;
 use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign};
 
-/// Marker trait for types that can be used as words in a stack.
-pub trait Word:
-    Debug
-    + Display
-    + Copy
-    + Default
-    + Into<usize>
-    + From<usize>
-    + From<i32>
-    + Eq
-    + Ord
+pub trait WordBase: Debug + Display + Copy + Eq + Ord + Default {}
+
+impl<T> WordBase for T where T: Debug + Display + Copy + Eq + Ord + Default {}
+
+pub trait WordConvert: TryFrom<usize> + Into<usize> + From<i32> {}
+
+impl<T> WordConvert for T where T: TryFrom<usize> + Into<usize> + From<i32> {}
+
+pub trait WordOps:
+    Sized
     + Add<Self, Output = Self>
     + Sub<Self, Output = Self>
     + Mul<Self, Output = Self>
@@ -25,6 +24,25 @@ pub trait Word:
     + Rem<Self, Output = Self>
     + RemAssign
 {
+}
+
+impl<T> WordOps for T where
+    T: Add<Self, Output = Self>
+        + Sub<Self, Output = Self>
+        + Mul<Self, Output = Self>
+        + Div<Self, Output = Self>
+        + Rem<Self, Output = Self>
+        + AddAssign
+        + SubAssign
+        + MulAssign
+        + DivAssign
+        + RemAssign
+        + Neg<Output = Self>
+{
+}
+
+/// Marker trait for types that can be used as words in a stack.
+pub trait Word: WordBase + WordConvert + WordOps {
     /// This is a wrapper around the [`from_str_radix()`](i32::from_str_radix()) function that is implemented for all of Rust's numeric types.
     ///
     /// # Errors
@@ -140,11 +158,11 @@ macro_rules! impl_word {
             }
         }
 
-        impl ::core::convert::From<usize> for $name {
-            #[allow(clippy::cast_possible_truncation)]
-            #[allow(clippy::cast_possible_wrap)]
-            fn from(value: usize) -> Self {
-                Self(value as $type)
+        impl ::core::convert::TryFrom<usize> for $name {
+            type Error = ::core::num::TryFromIntError;
+
+            fn try_from(value: usize) -> Result<Self, Self::Error> {
+                Ok(Self(<$type>::try_from(value)?))
             }
         }
 
