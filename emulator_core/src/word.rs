@@ -32,18 +32,18 @@ pub trait Word:
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError>;
 
     /// Checks for carry when adding.
-    fn carry_add(&self, rhs: Self) -> bool;
+    fn check_carry_add(&self, rhs: Self) -> bool;
 
     /// Checks for carry when subtracting.
-    fn carry_sub(&self, rhs: Self) -> bool;
+    fn check_carry_sub(&self, rhs: Self) -> bool;
 
     /// Checks for carry when multiplying.
-    fn carry_mul(&self, rhs: Self) -> bool;
+    fn check_carry_mul(&self, rhs: Self) -> bool;
 
     /// Checks for division overflow (i.e., MIN / -1 for signed types).
     /// Similiar to [`Word::overflowing_div()`] this is a convenience wrapper over Rust's [`overflowing_div()`](i32::overflowing_div()).
     /// However it discards the result of the division.
-    fn carry_div(&self, rhs: Self) -> bool;
+    fn check_carry_div(&self, rhs: Self) -> bool;
 
     /// Convenience wrapper over Rust's [`overflowing_add()`](i32::overflowing_add()).
     fn overflowing_add(&self, rhs: Self) -> (Self, bool);
@@ -83,25 +83,25 @@ macro_rules! impl_word {
                 <$type>::from_str_radix(s, radix).map($name)
             }
 
-            fn carry_add(&self, rhs: Self) -> bool {
+            fn check_carry_add(&self, rhs: Self) -> bool {
                 #[allow(clippy::cast_sign_loss)]
                 let (lhs, rhs) = (self.0 as u128, rhs.0 as u128);
                 lhs + rhs > <$type>::MAX as u128
             }
 
-            fn carry_sub(&self, rhs: Self) -> bool {
+            fn check_carry_sub(&self, rhs: Self) -> bool {
                 #[allow(clippy::cast_sign_loss)]
                 let (lhs, rhs) = (self.0 as u128, rhs.0 as u128);
                 lhs < rhs
             }
 
-            fn carry_mul(&self, rhs: Self) -> bool {
+            fn check_carry_mul(&self, rhs: Self) -> bool {
                 #[allow(clippy::cast_sign_loss)]
                 let (lhs, rhs) = (self.0 as u128, rhs.0 as u128);
                 lhs * rhs > <$type>::MAX as u128
             }
 
-            fn carry_div(&self, rhs: Self) -> bool {
+            fn check_carry_div(&self, rhs: Self) -> bool {
                 self.0.overflowing_div(rhs.0).1
             }
 

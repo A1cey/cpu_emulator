@@ -210,6 +210,21 @@ pub enum Instruction<W: Word> {
     /// The condition is checked before jumping and the jump is performed if the condition is met.
     /// See the assembly instruction at `JumpCondition`.
     Jump { to: W, condition: JumpCondition },
+    // Cmp
+    // Push
+    // Pop
+    // Call
+    // Ret
+    // Xor
+    // And
+    // Or
+    // Not
+    // Shl
+    // Shr
+    // Rol
+    // Ror
+    // Load
+    // Store
 }
 
 impl<W: Word> InstructionSet for Instruction<W> {
@@ -320,7 +335,7 @@ impl<W: Word> Instruction<W> {
 
         if signed {
             let (result, overflow) = a.overflowing_add(b);
-            let carry = a.carry_add(b);
+            let carry = a.check_carry_add(b);
 
             processor.registers.set_reg(acc, result);
             processor.registers.set_flag(Flag::V, overflow);
@@ -345,7 +360,7 @@ impl<W: Word> Instruction<W> {
 
         if signed {
             let (result, overflow) = a.overflowing_sub(b);
-            let carry = a.carry_sub(b);
+            let carry = a.check_carry_sub(b);
 
             processor.registers.set_reg(acc, result);
             processor.registers.set_flag(Flag::V, overflow);
@@ -371,7 +386,7 @@ impl<W: Word> Instruction<W> {
 
         if signed {
             let (result, overflow) = a.overflowing_mul(b);
-            let carry = a.carry_mul(b);
+            let carry = a.check_carry_mul(b);
 
             processor.registers.set_reg(acc, result);
             processor.registers.set_flag(Flag::V, overflow);
