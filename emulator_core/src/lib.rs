@@ -58,7 +58,7 @@
 
 #![no_std]
 
-#![cfg(feature = "alloc")]
+#[cfg(feature = "alloc")]
 extern crate alloc;
 
 pub mod instruction_set;
