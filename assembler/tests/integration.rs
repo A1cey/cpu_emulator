@@ -1,6 +1,6 @@
 use assembler::{
     assemble,
-    instruction_set::{Instruction, JumpCondition, Operand},
+    instruction::{Instruction, jump_condition::JumpCondition, operand::Operand},
 };
 use emulator_core::{processor::Processor, program::Program, register::Register, word::I32};
 

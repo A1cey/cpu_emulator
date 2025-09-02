@@ -1,12 +1,11 @@
+use crate::instruction::Instruction;
 use crate::parser::{Parser, ParserError};
 use crate::tokenizer::{Tokenizer, TokenizerError};
 use emulator_core::program::Program;
 use emulator_core::word::Word;
 use thiserror::Error;
 
-use crate::instruction_set::Instruction;
-
-pub mod instruction_set;
+pub mod instruction;
 mod parser;
 mod tokenizer;
 

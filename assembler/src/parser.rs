@@ -7,12 +7,12 @@ use emulator_core::{
 };
 use thiserror::Error;
 
-use crate::{
-    instruction_set::{
-        ASMBinaryInstruction, ASMInstruction, ASMJumpInstruction, ASMUnaryInstruction, Instruction, Operand,
-    },
-    tokenizer::{Literal, Token},
+use crate::instruction::Instruction;
+use crate::instruction::asm_instruction::{
+    ASMBinaryInstruction, ASMInstruction, ASMJumpInstruction, ASMUnaryInstruction,
 };
+use crate::instruction::operand::Operand;
+use crate::tokenizer::{Literal, Token};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
 pub struct Parser<'a, W: Word> {

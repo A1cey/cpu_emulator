@@ -1,0 +1,28 @@
+use core::ops::Deref;
+
+use emulator_core::{processor::Processor, register::Register, word::Word};
+
+use crate::instruction::Instruction;
+
+/// Operand for the instruction set.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+pub enum Operand<W: Word> {
+    Register(Register),
+    Value(W),
+}
+
+impl<W: Word> Operand<W> {
+    #[inline]
+    pub(crate) const fn resolve<const STACK_SIZE: usize, P>(
+        self,
+        processor: &Processor<STACK_SIZE, Instruction<W>, P>,
+    ) -> W
+    where
+        P: Deref<Target = [Instruction<W>]>,
+    {
+        match self {
+            Self::Register(reg) => processor.registers.get_reg(reg),
+            Self::Value(val) => val,
+        }
+    }
+}
