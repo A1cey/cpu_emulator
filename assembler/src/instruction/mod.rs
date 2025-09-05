@@ -18,44 +18,44 @@ use crate::instruction::{
     operand::Operand,
 };
 
-/// Default instruction set for the processor.
+/// A default instruction set implementation, that can be used for the [emulator_core](../../emulator_core/index.html) crate.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
 pub enum Instruction<W: Word> {
-    /// No operation. \[NOP\]
+    /// No operation. (NOP)
     Nop,
-    /// Copy a value from the operand to the register. \[MOV\]
+    /// Copy a value from the operand to the register. (MOV)
     Mov { to: Register, from: Operand<W> },
     /// Add the value of the operand (rhs) to the register (acc).
-    /// The result is stored in acc. \[ADD\]
+    /// The result is stored in acc. (ADD\[S\])
     Add {
         acc: Register,
         rhs: Operand<W>,
         signed: bool,
     },
     /// Subtract the value of the operand (rhs) from the register (acc).
-    /// The result is stored in acc. \[SUB\]
+    /// The result is stored in acc. (SUB\[S\])
     Sub {
         acc: Register,
         rhs: Operand<W>,
         signed: bool,
     },
     /// Multiply the value of the operand (rhs) with the value of the register (acc).
-    /// The result is stored in acc. \[MUL\]
+    /// The result is stored in acc. (MUL\[S\])
     Mul {
         acc: Register,
         rhs: Operand<W>,
         signed: bool,
     },
     /// Divide the value of the register (acc) by the value of the operand (rhs).
-    /// The result is stored in acc. \[DIV\]
+    /// The result is stored in acc. (DIV\[S\])
     Div {
         acc: Register,
         rhs: Operand<W>,
         signed: bool,
     },
-    /// Increment the value in a register by one. \[INC\]
+    /// Increment the value in a register by one. (INC\[S\])
     Inc { reg: Register, signed: bool },
-    /// Decrement the value in a register by one. \[DEC\]
+    /// Decrement the value in a register by one. (DEC\[S\])
     Dec { reg: Register, signed: bool },
     /// Set program pointer to value, effectively jumping to the instruction at this point in the program.
     /// The condition is checked before jumping and the jump is performed if the condition is met.
