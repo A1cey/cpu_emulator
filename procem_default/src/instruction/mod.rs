@@ -5,7 +5,7 @@ pub mod operand;
 use core::cmp::Ordering;
 use std::ops::Deref;
 
-use emulator_core::{
+use procem::{
     instruction::Instruction as InstructionTrait,
     processor::Processor,
     register::{Flag, Register},
@@ -18,7 +18,7 @@ use crate::instruction::{
     operand::Operand,
 };
 
-/// A default instruction set implementation, that can be used for the [emulator_core](../../emulator_core/index.html) crate.
+/// A default instruction set implementation, that can be used for the [procem](../../procem/index.html) crate.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
 pub enum Instruction<W: Word> {
     /// No operation. (NOP)
@@ -327,7 +327,7 @@ impl<W: Word> Instruction<W> {
 mod test {
 
     use super::*;
-    use emulator_core::word::*;
+    use procem::word::*;
 
     const STACK_SIZE: usize = 32;
     type IS = Instruction<W>;

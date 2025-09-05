@@ -1,15 +1,15 @@
-//! This library provides the [`Processor`](processor::Processor) structure, which emulates a real-world processor architecture.
+//! Procem provides a [`Processor`](processor::Processor) structure, which emulates a real-world processor architecture.
 //!
 //! The design is loosely based on the ARM architecture.
 //!
 //! The processor operates by loading and executing an assembly [`Program`](program::Program).
 //! A [`Program`](program::Program) is a collection of assembly instructions that the processor iterates over and executes.
 //! The instruction set in use must implement the [`Instruction`](instruction::Instruction) trait.
-//! A default instruction set is available via the [`assembler`](../assembler/index.html) crate.
+//! A default instruction set is available in the [`procem_default`](../procem_default/index.html) crate.
 //!
-//! # Implementing Custom Instruction Sets
+//! # The [`Word`](word::Word) trait
 //!
-//! The crate provides a [`Word`](word::Word) trait.
+//! Procem provides a [`Word`](word::Word) trait.
 //! This trait wraps the underlying type used as the processor’s word size, mimicking real-world architectures
 //! (e.g., [`I32`](word::I32) corresponds to a 32-bit architecture).
 //!
@@ -25,14 +25,17 @@
 //!
 //! These types use two's complement representation, mirroring how real-world processor architectures work.
 //!
+//! To implement custom [`Word`](word::Word) types, you can define your own type that implements the [`Word`](word::Word) trait.
+//! 
+//! 
 //! The processor’s [`Registers`](register::Registers), [`Flags`](register::Flag) and [`Stack`](stack::Stack)
 //! are directly accessible and modifiable through the [`Processor`](processor::Processor) structure.
 //!
 //! ```
-//! # use emulator_core::register::{Flag, Register};
-//! # use emulator_core::processor::Processor;
-//! # use emulator_core::instruction::Instruction;
-//! # use emulator_core::word::{I32, Word};
+//! # use procem::register::{Flag, Register};
+//! # use procem::processor::Processor;
+//! # use procem::instruction::Instruction;
+//! # use procem::word::{I32, Word};
 //! # use core::marker::PhantomData;
 //! # use core::ops::Deref;
 //! #
@@ -52,6 +55,8 @@
 //!
 //! let overflow = processor.registers.get_flag(Flag::V);
 //! ```
+//! 
+//! 
 
 #![no_std]
 

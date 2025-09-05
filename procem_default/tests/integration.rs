@@ -1,8 +1,8 @@
-use assembler::{
+use procem::{processor::Processor, program::Program, register::Register, word::I32};
+use procem_default::{
     assemble,
     instruction::{Instruction, jump_condition::JumpCondition, operand::Operand},
 };
-use emulator_core::{processor::Processor, program::Program, register::Register, word::I32};
 
 #[test]
 fn simple_5x2_multiplication() {

@@ -1,8 +1,8 @@
 use crate::instruction::Instruction;
 use crate::parser::{Parser, ParserError};
 use crate::tokenizer::{Tokenizer, TokenizerError};
-use emulator_core::program::Program;
-use emulator_core::word::Word;
+use procem::program::Program;
+use procem::word::Word;
 use thiserror::Error;
 
 pub mod instruction;

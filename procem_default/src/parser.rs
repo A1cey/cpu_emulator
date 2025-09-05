@@ -1,7 +1,7 @@
 use core::num::ParseIntError;
 use std::collections::HashMap;
 
-use emulator_core::{
+use procem::{
     register::{Register, RegisterError},
     word::Word,
 };

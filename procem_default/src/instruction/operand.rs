@@ -1,6 +1,6 @@
 use core::ops::Deref;
 
-use emulator_core::{processor::Processor, register::Register, word::Word};
+use procem::{processor::Processor, register::Register, word::Word};
 
 use crate::instruction::Instruction;
 
