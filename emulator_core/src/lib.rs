@@ -4,7 +4,7 @@
 //!
 //! The processor operates by loading and executing an assembly [`Program`](program::Program).
 //! A [`Program`](program::Program) is a collection of assembly instructions that the processor iterates over and executes.
-//! The instruction set in use must implement the [`InstructionSet`](instruction_set::InstructionSet) trait.
+//! The instruction set in use must implement the [`Instruction`](instruction::Instruction) trait.
 //! A default instruction set is available via the [`assembler`](../assembler/index.html) crate.
 //!
 //! # Implementing Custom Instruction Sets
