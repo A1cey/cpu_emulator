@@ -4,13 +4,13 @@ use core::{
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
-pub(crate) struct FmtArray<'a, T>(pub &'a [T]);
+pub struct FmtArray<'a, T>(pub &'a [T]);
 
 impl<T> Deref for FmtArray<'_, T> {
     type Target = [T];
 
     fn deref(&self) -> &Self::Target {
-        &self.0
+        self.0
     }
 }
 

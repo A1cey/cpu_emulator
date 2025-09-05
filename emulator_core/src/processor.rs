@@ -16,30 +16,33 @@
 use core::fmt::{Display, Formatter};
 use core::ops::Deref;
 
-use crate::instruction_set::InstructionSet;
+use crate::instruction::Instruction;
 use crate::program::{Program, ProgramError};
 use crate::register::{Register, Registers};
 use crate::stack::Stack;
+use crate::word::Word;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct Processor<'a, const STACK_SIZE: usize, IS, P>
+pub struct Processor<'a, const STACK_SIZE: usize, I, P, W>
 where
-    IS: InstructionSet,
-    P: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    P: Deref<Target = [I]>,
+    W: Word,
 {
-    pub registers: Registers<IS::W>,
-    pub stack: Stack<STACK_SIZE, IS>,
-    program: Option<&'a Program<IS, P>>,
+    pub registers: Registers<W>,
+    pub stack: Stack<STACK_SIZE, W>,
+    program: Option<&'a Program<I, P, W>>,
 }
 
-impl<'a, const STACK_SIZE: usize, IS, P> Processor<'a, STACK_SIZE, IS, P>
+impl<'a, const STACK_SIZE: usize, I, P, W> Processor<'a, STACK_SIZE, I, P, W>
 where
-    IS: InstructionSet,
-    P: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    P: Deref<Target = [I]>,
+    W: Word,
 {
     #[must_use]
     #[inline]
-    pub const fn builder() -> ProcessorBuilder<'a, STACK_SIZE, IS, P> {
+    pub const fn builder() -> ProcessorBuilder<'a, STACK_SIZE, I, P, W> {
         ProcessorBuilder::new()
     }
 
@@ -58,7 +61,7 @@ where
     ///
     /// The program cannot be changed after being loaded. To make changes, an updated or entirely new program has to be loaded.
     #[inline]
-    pub const fn load_program(&mut self, program: &'a Program<IS, P>) {
+    pub const fn load_program(&mut self, program: &'a Program<I, P, W>) {
         self.program = Some(program);
     }
 
@@ -89,16 +92,17 @@ where
 
         self.registers.inc(Register::PC);
 
-        IS::execute(instruction, self);
+        I::execute(instruction, self);
 
         Ok(())
     }
 }
 
-impl<const STACK_SIZE: usize, IS, P> Display for Processor<'_, STACK_SIZE, IS, P>
+impl<const STACK_SIZE: usize, I, P, W> Display for Processor<'_, STACK_SIZE, I, P, W>
 where
-    IS: InstructionSet,
-    P: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    P: Deref<Target = [I]>,
+    W: Word,
 {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(f, "Registers: \n{}\nStack: \t\t{}", self.registers, self.stack)
@@ -106,20 +110,22 @@ where
 }
 
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
-pub struct ProcessorBuilder<'a, const STACK_SIZE: usize, IS, P>
+pub struct ProcessorBuilder<'a, const STACK_SIZE: usize, I, P, W>
 where
-    IS: InstructionSet,
-    P: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    P: Deref<Target = [I]>,
+    W: Word,
 {
-    registers: Option<Registers<IS::W>>,
-    stack: Option<Stack<STACK_SIZE, IS>>,
-    program: Option<&'a Program<IS, P>>,
+    registers: Option<Registers<W>>,
+    stack: Option<Stack<STACK_SIZE, W>>,
+    program: Option<&'a Program<I, P, W>>,
 }
 
-impl<'a, const STACK_SIZE: usize, IS, P> ProcessorBuilder<'a, STACK_SIZE, IS, P>
+impl<'a, const STACK_SIZE: usize, I, P, W> ProcessorBuilder<'a, STACK_SIZE, I, P, W>
 where
-    IS: InstructionSet,
-    P: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    P: Deref<Target = [I]>,
+    W: Word,
 {
     /// Creates a new `ProcessorBuilder` with registers, stack and program set to `None`.
     #[inline]
@@ -134,7 +140,7 @@ where
     /// Sets the registers for the `ProcessorBuilder`.
     #[must_use]
     #[inline]
-    pub const fn with_registers(mut self, registers: Registers<IS::W>) -> Self {
+    pub const fn with_registers(mut self, registers: Registers<W>) -> Self {
         self.registers = Some(registers);
         self
     }
@@ -142,7 +148,7 @@ where
     /// Sets the stack for the `ProcessorBuilder`.
     #[must_use]
     #[inline]
-    pub const fn with_stack(mut self, stack: Stack<STACK_SIZE, IS>) -> Self {
+    pub const fn with_stack(mut self, stack: Stack<STACK_SIZE, W>) -> Self {
         self.stack = Some(stack);
         self
     }
@@ -150,7 +156,7 @@ where
     /// Sets the program for the `ProcessorBuilder`.
     #[must_use]
     #[inline]
-    pub const fn with_program(mut self, program: &'a Program<IS, P>) -> Self {
+    pub const fn with_program(mut self, program: &'a Program<I, P, W>) -> Self {
         self.program = Some(program);
         self
     }
@@ -158,7 +164,7 @@ where
     /// Builds the `Processor` with the given registers, stack and program.
     #[must_use]
     #[inline]
-    pub  fn build(self) -> Processor<'a, STACK_SIZE, IS, P> {
+    pub fn build(self) -> Processor<'a, STACK_SIZE, I, P, W> {
         Processor {
             registers: self.registers.unwrap_or_default(),
             stack: self.stack.unwrap_or_default(),

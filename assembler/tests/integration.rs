@@ -8,7 +8,7 @@ use emulator_core::{processor::Processor, program::Program, register::Register, 
 fn simple_5x2_multiplication() {
     const STACK_SIZE: usize = 1024;
     type IS = Instruction<I32>;
-    
+
     let program = assemble::<I32>(
         "
         .input
@@ -21,7 +21,7 @@ fn simple_5x2_multiplication() {
 
     assert_eq!(
         program,
-        Program::<IS, Vec<Instruction<I32>>>::new(vec![
+        Program::<IS, Vec<Instruction<I32>>, I32>::new(vec![
             Instruction::Mov {
                 to: Register::R0,
                 from: Operand::Value(2.into())
@@ -38,7 +38,9 @@ fn simple_5x2_multiplication() {
         ])
     );
 
-    let mut processor = Processor::<STACK_SIZE, _, _>::builder().with_program(&program).build();
+    let mut processor = Processor::<STACK_SIZE, _, _, _>::builder()
+        .with_program(&program)
+        .build();
 
     println!("{processor}");
 

@@ -1,38 +1,41 @@
-use core::ops::Deref;
 use core::marker::PhantomData;
+use core::ops::Deref;
 use thiserror::Error;
 
-use crate::instruction_set::InstructionSet;
+use crate::instruction::Instruction;
+use crate::word::Word;
 
 #[derive(Debug, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
-pub struct Program<IS, T>(T, PhantomData<IS>);
+pub struct Program<I, T, W>(T, PhantomData<(I, W)>);
 
-impl<T, IS> Deref for Program<IS, T>
+impl<T, I, W: Word> Deref for Program<I, T, W>
 where
-    IS: InstructionSet,
-    T: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    T: Deref<Target = [I]>,
 {
-    type Target = [IS::Instruction];
+    type Target = [I];
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<IS, T> From<T> for Program<IS, T>
+impl<I, T, W> From<T> for Program<I, T, W>
 where
-    IS: InstructionSet,
-    T: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    T: Deref<Target = [I]>,
+    W: Word,
 {
     fn from(instructions: T) -> Self {
         Self(instructions, PhantomData)
     }
 }
 
-impl<T, IS> Program<IS, T>
+impl<T, I, W> Program<I, T, W>
 where
-    IS: InstructionSet,
-    T: Deref<Target = [IS::Instruction]>,
+    I: Instruction<W>,
+    T: Deref<Target = [I]>,
+    W: Word,
 {
     /// Creates a new program from the provided instructions.
     #[must_use]
@@ -45,7 +48,7 @@ where
     /// # Errors
     /// Returns `PCOutOfBounds` error if the program counter is not in bounds.
     #[inline]
-    pub fn fetch_instruction(&self, pc: usize) -> Result<IS::Instruction, ProgramError> {
+    pub fn fetch_instruction(&self, pc: usize) -> Result<I, ProgramError> {
         self.get(pc).map_or_else(
             || {
                 Err(ProgramError::PCOutOfBounds {

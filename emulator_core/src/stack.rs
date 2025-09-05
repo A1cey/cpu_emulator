@@ -1,51 +1,51 @@
 use crate::helper;
-use crate::instruction_set::InstructionSet;
+use crate::word::Word;
 use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Deref, DerefMut};
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct Stack<const STACK_SIZE: usize, IS: InstructionSet>(pub [IS::W; STACK_SIZE]);
+pub struct Stack<const STACK_SIZE: usize, W: Word>(pub [W; STACK_SIZE]);
 
-impl<const STACK_SIZE: usize, IS: InstructionSet> Deref for Stack<STACK_SIZE, IS> {
-    type Target = [IS::W; STACK_SIZE];
+impl<const STACK_SIZE: usize, W: Word> Deref for Stack<STACK_SIZE, W> {
+    type Target = [W; STACK_SIZE];
 
     fn deref(&self) -> &Self::Target {
         &self.0
     }
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet> DerefMut for Stack<STACK_SIZE, IS> {
+impl<const STACK_SIZE: usize, W: Word> DerefMut for Stack<STACK_SIZE, W> {
     fn deref_mut(&mut self) -> &mut Self::Target {
         &mut self.0
     }
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet> Default for Stack<STACK_SIZE, IS> {
+impl<const STACK_SIZE: usize, W: Word> Default for Stack<STACK_SIZE, W> {
     fn default() -> Self {
         Self::new()
     }
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet> Display for Stack<STACK_SIZE, IS> {
+impl<const STACK_SIZE: usize, W: Word> Display for Stack<STACK_SIZE, W> {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), core::fmt::Error> {
         write!(f, "{}", helper::FmtArray(self.deref().as_slice()))
     }
 }
 
-impl<const STACK_SIZE: usize, IS: InstructionSet> Stack<STACK_SIZE, IS> {
+impl<const STACK_SIZE: usize, W: Word> Stack<STACK_SIZE, W> {
     /// Create a new stack with all elements initialized to the default value.
     #[must_use]
     pub fn new() -> Self {
-        Self([IS::W::default(); STACK_SIZE])
+        Self([W::default(); STACK_SIZE])
     }
 
     /// Read a value from the stack at the given stack pointer.
     ///
     /// # Errors
     /// Returns the value on the stack or an `OutOfBounds` error.
-    pub fn read(&self, sp: usize) -> Result<&IS::W, StackError> {
+    pub fn read(&self, sp: usize) -> Result<&W, StackError> {
         self.get(sp).ok_or(StackError::OutOfBounds {
             sp,
             stack_size: self.len(),
@@ -56,7 +56,7 @@ impl<const STACK_SIZE: usize, IS: InstructionSet> Stack<STACK_SIZE, IS> {
     ///
     /// # Errors
     /// Returns an `OutOfBounds` error if the stack pointer is out of bounds.
-    pub fn write(&mut self, sp: usize, value: IS::W) -> Result<(), StackError> {
+    pub fn write(&mut self, sp: usize, value: W) -> Result<(), StackError> {
         let stack_size = self.len();
 
         self.get_mut(sp).map_or_else(

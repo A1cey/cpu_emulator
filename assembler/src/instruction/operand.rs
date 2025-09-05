@@ -15,7 +15,7 @@ impl<W: Word> Operand<W> {
     #[inline]
     pub(crate) const fn resolve<const STACK_SIZE: usize, P>(
         self,
-        processor: &Processor<STACK_SIZE, Instruction<W>, P>,
+        processor: &Processor<STACK_SIZE, Instruction<W>, P, W>,
     ) -> W
     where
         P: Deref<Target = [Instruction<W>]>,

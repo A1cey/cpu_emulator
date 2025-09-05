@@ -31,25 +31,22 @@
 //! ```
 //! # use emulator_core::register::{Flag, Register};
 //! # use emulator_core::processor::Processor;
-//! # use emulator_core::instruction_set::InstructionSet;
+//! # use emulator_core::instruction::Instruction;
 //! # use emulator_core::word::{I32, Word};
 //! # use core::marker::PhantomData;
 //! # use core::ops::Deref;
 //! #
 //! # #[derive(Debug, PartialEq, Eq, Clone, Copy, Ord, PartialOrd, Hash)]
-//! # struct Instruction<W: Word> (PhantomData<W>);
+//! # struct Inst<W: Word> (PhantomData<W>);
 //! #
-//! # impl<W: Word> InstructionSet for Instruction<W> {
-//! #     type Instruction = Self;
-//! #     type W = W;
-//! #     fn execute<const STACK_SIZE: usize, P: Deref<Target = [Self::Instruction]>>(
-//! #         instruction: Self::Instruction,
-//! #         processor: &mut Processor<STACK_SIZE, Self, P>
+//! # impl<W: Word> Instruction<W> for Inst<W> {
+//! #     fn execute<const STACK_SIZE: usize, P: Deref<Target = [Self]>>(
+//! #         instruction: Self,
+//! #         processor: &mut Processor<STACK_SIZE, Self, P, W>
 //! #     ) {}
 //! # }
 //! #
-//! # type IS = Instruction<I32>;
-//! # let mut processor = Processor::<2048, IS, Vec<<IS as InstructionSet>::Instruction>>::new();
+//! # let mut processor = Processor::<2048, _, Vec<Inst<I32>>, _>::new();
 //! let r0 = processor.registers.get_reg(Register::R0);
 //! processor.registers.set_reg(Register::R1, r0);
 //!
@@ -61,7 +58,7 @@
 #[cfg(feature = "alloc")]
 extern crate alloc;
 
-pub mod instruction_set;
+pub mod instruction;
 pub mod processor;
 pub mod program;
 pub mod register;

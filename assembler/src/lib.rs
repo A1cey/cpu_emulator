@@ -9,7 +9,7 @@ pub mod instruction;
 mod parser;
 mod tokenizer;
 
-pub type AssembledProgram<W> = Program<Instruction<W>, Vec<Instruction<W>>>;
+pub type AssembledProgram<W> = Program<Instruction<W>, Vec<Instruction<W>>, W>;
 
 /// Assembles Program from Assembly Code.
 ///

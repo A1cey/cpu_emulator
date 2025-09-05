@@ -35,7 +35,7 @@ impl JumpCondition {
     #[inline]
     pub(crate) const fn check<const STACK_SIZE: usize, W, P>(
         self,
-        processor: &Processor<STACK_SIZE, Instruction<W>, P>,
+        processor: &Processor<STACK_SIZE, Instruction<W>, P, W>,
     ) -> bool
     where
         W: Word,

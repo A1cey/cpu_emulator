@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
-pub(crate) enum ASMBinaryInstruction {
+pub enum ASMBinaryInstruction {
     Mov,
     Add,
     AddS,
@@ -12,7 +12,7 @@ pub(crate) enum ASMBinaryInstruction {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
-pub(crate) enum ASMUnaryInstruction {
+pub enum ASMUnaryInstruction {
     Inc,
     IncS,
     Dec,
@@ -20,7 +20,7 @@ pub(crate) enum ASMUnaryInstruction {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
-pub(crate) enum ASMJumpInstruction {
+pub enum ASMJumpInstruction {
     Jmp,
     Jz,
     Jnz,
@@ -35,7 +35,7 @@ pub(crate) enum ASMJumpInstruction {
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
-pub(crate) enum ASMInstruction {
+pub enum ASMInstruction {
     Nop,
     Unary(ASMUnaryInstruction),
     Binary(ASMBinaryInstruction),
