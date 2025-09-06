@@ -1,6 +1,9 @@
 use core::fmt::{Debug, Display};
 use core::num::ParseIntError;
-use core::ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Rem, RemAssign, Sub, SubAssign};
+use core::ops::{
+    Add, AddAssign, BitAnd, BitAndAssign, BitOr, BitOrAssign, BitXor, BitXorAssign, Div, DivAssign, Mul, MulAssign,
+    Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
+};
 
 pub trait WordBase: Debug + Display + Copy + Eq + Ord + Default {}
 
@@ -12,65 +15,111 @@ impl<T> WordConvert for T where T: TryFrom<usize> + Into<usize> + From<i32> {}
 
 pub trait WordOps:
     Sized
-    + Add<Self, Output = Self>
-    + Sub<Self, Output = Self>
-    + Mul<Self, Output = Self>
-    + Div<Self, Output = Self>
+    + Add<Output = Self>
+    + Sub<Output = Self>
+    + Mul<Output = Self>
+    + Div<Output = Self>
     + AddAssign
     + SubAssign
     + MulAssign
     + DivAssign
-    + Neg<Output = Self>
-    + Rem<Self, Output = Self>
+    + Neg
+    + Rem
     + RemAssign
 {
 }
 
 impl<T> WordOps for T where
-    T: Add<Self, Output = Self>
-        + Sub<Self, Output = Self>
-        + Mul<Self, Output = Self>
-        + Div<Self, Output = Self>
-        + Rem<Self, Output = Self>
+    T: Add<Output = Self>
+        + Sub<Output = Self>
+        + Mul<Output = Self>
+        + Div<Output = Self>
+        + Rem<Output = Self>
         + AddAssign
         + SubAssign
         + MulAssign
         + DivAssign
         + RemAssign
-        + Neg<Output = Self>
+        + Neg
+{
+}
+
+pub trait WordBitOps:
+    Sized
+    + BitAnd<Self, Output = Self>
+    + BitOr<Self, Output = Self>
+    + BitXor<Self, Output = Self>
+    + Not<Output = Self>
+    + Shl<Self, Output = Self>
+    + Shr<Self, Output = Self>
+    + BitAndAssign
+    + BitOrAssign
+    + BitXorAssign
+    + ShlAssign
+    + ShrAssign
+{
+}
+
+impl<T> WordBitOps for T where
+    T: BitAnd<Self, Output = Self>
+        + BitOr<Self, Output = Self>
+        + BitXor<Self, Output = Self>
+        + Not<Output = Self>
+        + Shl<Self, Output = Self>
+        + Shr<Self, Output = Self>
+        + BitAndAssign
+        + BitOrAssign
+        + BitXorAssign
+        + ShlAssign
+        + ShrAssign
 {
 }
 
 /// Marker trait for types that can be used as words in a stack.
-pub trait Word: WordBase + WordConvert + WordOps {
+pub trait Word: WordBase + WordConvert + WordOps + WordBitOps {
     /// This is a wrapper around the [`from_str_radix()`](i32::from_str_radix()) function that is implemented for all of Rust's numeric types.
     ///
     /// # Errors
     /// Returns [`ParseIntError`] when the parsing failed.
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError>;
 
-    /// Checks for carry when adding.
+    /// Checks for carry when adding.#
+    #[must_use]
     fn check_carry_add(&self, rhs: Self) -> bool;
 
     /// Checks for carry when subtracting.
+    #[must_use]
     fn check_carry_sub(&self, rhs: Self) -> bool;
 
     /// Checks for carry when multiplying.
+    #[must_use]
     fn check_carry_mul(&self, rhs: Self) -> bool;
 
     /// Checks for division overflow (i.e., MIN / -1 for signed types).
     /// Similiar to [`Word::overflowing_div()`] this is a convenience wrapper over Rust's [`overflowing_div()`](i32::overflowing_div()).
     /// However it discards the result of the division.
+    #[must_use]
     fn check_carry_div(&self, rhs: Self) -> bool;
 
     /// Convenience wrapper over Rust's [`overflowing_add()`](i32::overflowing_add()).
+    #[must_use]
     fn overflowing_add(&self, rhs: Self) -> (Self, bool);
     /// Convenience wrapper over Rust's [`overflowing_sub()`](i32::overflowing_sub()).
+    #[must_use]
     fn overflowing_sub(&self, rhs: Self) -> (Self, bool);
     /// Convenience wrapper over Rust's [`overflowing_mul()`](i32::overflowing_mul()).
+    #[must_use]
     fn overflowing_mul(&self, rhs: Self) -> (Self, bool);
     /// Convenience wrapper over Rust's [`overflowing_div()`](i32::overflowing_div()).
+    #[must_use]
     fn overflowing_div(&self, rhs: Self) -> (Self, bool);
+
+    /// Convenience wrapper over Rust's [`rotate_left()`](i32::rotate_left()).
+    #[must_use]
+    fn rotate_left(&self, val: u32) -> Self;
+    /// Convenience wrapper over Rust's [`rotate_right()`](i32::rotate_right()).
+    #[must_use]
+    fn rotate_right(&self, val: u32) -> Self;
 }
 
 // This macro is used to implement the From<i32> trait for Word.
@@ -141,6 +190,14 @@ macro_rules! impl_word {
             fn overflowing_div(&self, rhs: Self) -> (Self, bool) {
                 let (res, overflow) = self.0.overflowing_div(rhs.0);
                 (Self(res), overflow)
+            }
+
+            fn rotate_left(&self, val: u32) -> Self {
+                Self(self.0.rotate_left(val))
+            }
+
+            fn rotate_right(&self, val: u32) -> Self {
+                Self(self.0.rotate_right(val))
             }
         }
 
@@ -247,6 +304,84 @@ macro_rules! impl_word {
         impl ::core::ops::RemAssign for $name {
             fn rem_assign(&mut self, rhs: Self) {
                 *self = *self % rhs
+            }
+        }
+
+        impl ::core::ops::BitAnd for $name {
+            type Output = Self;
+
+            fn bitand(self, rhs: Self) -> Self {
+                Self(self.0 & rhs.0)
+            }
+        }
+
+        impl ::core::ops::BitOr for $name {
+            type Output = Self;
+
+            fn bitor(self, rhs: Self) -> Self {
+                Self(self.0 | rhs.0)
+            }
+        }
+
+        impl ::core::ops::BitXor for $name {
+            type Output = Self;
+
+            fn bitxor(self, rhs: Self) -> Self {
+                Self(self.0 ^ rhs.0)
+            }
+        }
+
+        impl ::core::ops::Not for $name {
+            type Output = Self;
+
+            fn not(self) -> Self {
+                Self(!self.0)
+            }
+        }
+
+        impl ::core::ops::Shl for $name {
+            type Output = Self;
+
+            fn shl(self, rhs: Self) -> Self {
+                Self(self.0 << rhs.0)
+            }
+        }
+
+        impl ::core::ops::Shr for $name {
+            type Output = Self;
+
+            fn shr(self, rhs: Self) -> Self {
+                Self(self.0 >> rhs.0)
+            }
+        }
+
+        impl ::core::ops::BitAndAssign for $name {
+            fn bitand_assign(&mut self, rhs: Self) {
+                self.0 &= rhs.0;
+            }
+        }
+
+        impl ::core::ops::BitOrAssign for $name {
+            fn bitor_assign(&mut self, rhs: Self) {
+                self.0 |= rhs.0;
+            }
+        }
+
+        impl ::core::ops::BitXorAssign for $name {
+            fn bitxor_assign(&mut self, rhs: Self) {
+                self.0 ^= rhs.0;
+            }
+        }
+
+        impl ::core::ops::ShlAssign for $name {
+            fn shl_assign(&mut self, rhs: Self) {
+                self.0 <<= rhs.0;
+            }
+        }
+
+        impl ::core::ops::ShrAssign for $name {
+            fn shr_assign(&mut self, rhs: Self) {
+                self.0 >>= rhs.0;
             }
         }
     };

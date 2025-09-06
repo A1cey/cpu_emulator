@@ -2,7 +2,6 @@ use crate::helper;
 use crate::word::Word;
 use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Deref, DerefMut};
-use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
@@ -43,34 +42,22 @@ impl<const STACK_SIZE: usize, W: Word> Stack<STACK_SIZE, W> {
 
     /// Read a value from the stack at the given stack pointer.
     ///
-    /// # Errors
-    /// Returns the value on the stack or an `OutOfBounds` error.
-    pub fn read(&self, sp: usize) -> Result<&W, StackError> {
-        self.get(sp).ok_or(StackError::OutOfBounds {
-            sp,
-            stack_size: self.len(),
-        })
+    /// # Panics
+    /// Panics if the stack pointer is out of bounds.
+    pub fn read(&self, sp: W) -> W {
+        self.get(sp.into())
+            .copied()
+            .unwrap_or_else(|| panic!("Out of bounds stack access. Stack size: {STACK_SIZE}, Stack pointer: {sp}"))
     }
 
     /// Write a value to the stack at the given stack pointer.
     ///
-    /// # Errors
-    /// Returns an `OutOfBounds` error if the stack pointer is out of bounds.
-    pub fn write(&mut self, sp: usize, value: W) -> Result<(), StackError> {
-        let stack_size = self.len();
-
-        self.get_mut(sp).map_or_else(
-            || Err(StackError::OutOfBounds { sp, stack_size }),
-            |adr| {
-                *adr = value;
-                Ok(())
-            },
-        )
+    /// # Panics
+    /// Panics if the stack pointer is out of bounds.
+    pub fn write(&mut self, sp: W, value: W) {
+        *self
+            .get_mut(sp.into())
+            .unwrap_or_else(|| panic!("Out of bounds stack access. Stack size: {STACK_SIZE}, Stack pointer: {sp}")) =
+            value;
     }
-}
-
-#[derive(Error, Debug, Clone, PartialEq, Eq)]
-pub enum StackError {
-    #[error("Out of bounds stack access. Stack size: {stack_size}, Stack pointer: {sp}")]
-    OutOfBounds { sp: usize, stack_size: usize },
 }

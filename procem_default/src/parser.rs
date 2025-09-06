@@ -1,5 +1,5 @@
 use core::num::ParseIntError;
-use std::collections::HashMap;
+use std::{collections::HashMap, num::TryFromIntError};
 
 use procem::{
     register::{Register, RegisterError},
@@ -7,11 +7,12 @@ use procem::{
 };
 use thiserror::Error;
 
-use crate::instruction::Instruction;
 use crate::instruction::asm_instruction::{
-    ASMBinaryInstruction, ASMInstruction, ASMJumpInstruction, ASMUnaryInstruction,
+    ASMInstruction, ASMJumpInstruction, ASMRegOperandInstruction, ASMRotateInstruction, ASMShiftInstruction,
+    ASMSingleOperandInstruction, ASMSingleRegInstruction, ASMTwoOperandInstruction,
 };
 use crate::instruction::operand::Operand;
+use crate::instruction::{Instruction, asm_instruction::ASMNoArgInstruction};
 use crate::tokenizer::{Literal, Token};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
@@ -81,10 +82,17 @@ impl<'a, W: Word> Parser<'a, W> {
     fn parse_instruction(&mut self, instruction: &str) {
         match instruction.try_into() {
             Ok(inst) => match inst {
-                ASMInstruction::Nop => self.instructions.push(Instruction::Nop),
-                ASMInstruction::Unary(inst) => self.expect_unary_instruction(inst),
-                ASMInstruction::Binary(inst) => self.expect_binary_instruction(inst),
+                ASMInstruction::NoArg(inst) => self.instructions.push(match inst {
+                    ASMNoArgInstruction::Nop => Instruction::Nop,
+                    ASMNoArgInstruction::Ret => Instruction::Ret,
+                }),
+                ASMInstruction::RegOperand(inst) => self.expect_reg_operand_instruction(inst),
                 ASMInstruction::Jump(inst) => self.expect_destination(inst),
+                ASMInstruction::TwoOperand(inst) => self.expect_two_operand_instruction(inst),
+                ASMInstruction::SingleOperand(inst) => self.expect_single_operand_instruction(inst),
+                ASMInstruction::SingleReg(inst) => self.expect_single_reg_instruction(inst),
+                ASMInstruction::Rotate(inst) => self.expect_rotate_instruction(inst),
+                ASMInstruction::Shift(inst) => self.expect_shift_instruction(inst),
             },
             Err(()) => self.add_error(ParserError::UnknownInstruction {
                 idx: self.idx,
@@ -157,6 +165,17 @@ impl<'a, W: Word> Parser<'a, W> {
         }
     }
 
+    fn expect_word(&mut self) -> Result<W, ParserError> {
+        match self.get_next() {
+            Some(Token::Literal(lit)) => Ok(Self::convert_lit_to_val(lit)?),
+            _ => Err(ParserError::InvalidToken {
+                idx: self.idx,
+                expected: "Literal",
+                got: self.current_token_string(),
+            }),
+        }
+    }
+
     #[inline]
     fn get_next(&mut self) -> Option<&Token<'_>> {
         self.idx += 1;
@@ -182,7 +201,7 @@ impl<'a, W: Word> Parser<'a, W> {
         }
     }
 
-    fn expect_binary_instruction(&mut self, instr: ASMBinaryInstruction) {
+    fn expect_reg_operand_instruction(&mut self, instr: ASMRegOperandInstruction) {
         let acc = match self.expect_register() {
             Ok(reg) => reg,
             Err(err) => return self.add_error(err),
@@ -198,16 +217,90 @@ impl<'a, W: Word> Parser<'a, W> {
         };
 
         self.instructions
-            .push(Instruction::from_binary_instruction(instr, acc, operand));
+            .push(Instruction::from_reg_operand_instruction(instr, acc, operand));
     }
 
-    fn expect_unary_instruction(&mut self, instr: ASMUnaryInstruction) {
+    fn expect_single_reg_instruction(&mut self, instr: ASMSingleRegInstruction) {
         let reg = match self.expect_register() {
             Ok(reg) => reg,
             Err(err) => return self.add_error(err),
         };
 
-        self.instructions.push(Instruction::from_unary_instruction(instr, reg));
+        self.instructions
+            .push(Instruction::from_single_reg_instruction(instr, reg));
+    }
+
+    fn expect_single_operand_instruction(&mut self, instr: ASMSingleOperandInstruction) {
+        let operand = match self.expect_operand() {
+            Ok(op) => op,
+            Err(err) => return self.add_error(err),
+        };
+
+        self.instructions
+            .push(Instruction::from_single_operand_instruction(instr, operand));
+    }
+
+    fn expect_two_operand_instruction(&mut self, instr: ASMTwoOperandInstruction) {
+        let lhs = match self.expect_operand() {
+            Ok(op) => op,
+            Err(err) => return self.add_error(err),
+        };
+
+        if let Err(err) = self.expect_comma() {
+            return self.add_error(err);
+        }
+
+        let rhs = match self.expect_operand() {
+            Ok(op) => op,
+            Err(err) => return self.add_error(err),
+        };
+
+        self.instructions
+            .push(Instruction::from_two_operand_instruction(instr, lhs, rhs));
+    }
+
+    fn expect_shift_instruction(&mut self, instr: ASMShiftInstruction) {
+        let register = match self.expect_register() {
+            Ok(reg) => reg,
+            Err(err) => return self.add_error(err),
+        };
+
+        if let Err(err) = self.expect_comma() {
+            return self.add_error(err);
+        }
+
+        let literal = match self.expect_word() {
+            Ok(lit) => lit,
+            Err(err) => return self.add_error(err),
+        };
+
+        self.instructions
+            .push(Instruction::from_shift_instruction(instr, register, literal));
+    }
+
+    fn expect_rotate_instruction(&mut self, instr: ASMRotateInstruction) {
+        let register = match self.expect_register() {
+            Ok(reg) => reg,
+            Err(err) => return self.add_error(err),
+        };
+
+        if let Err(err) = self.expect_comma() {
+            return self.add_error(err);
+        }
+
+        let literal = match self.expect_word() {
+            Ok(lit) => lit,
+            Err(err) => return self.add_error(err),
+        };
+
+        let literal: usize = literal.into();
+        let literal: u32 = match literal.try_into() {
+            Ok(lit) => lit,
+            Err(err) => return self.add_error(ParserError::CannotConvertLiteralToU32 { literal, err }),
+        };
+
+        self.instructions
+            .push(Instruction::from_rotate_instruction(instr, register, literal));
     }
 }
 
@@ -231,6 +324,8 @@ pub enum ParserError {
     LiteralParsing(#[from] ParseIntError),
     #[error("Strings cannot be converted to numeric values directly. You could use a hex representation instead.")]
     CannotConvertStrToVal,
+    #[error("Cannot convert literal {literal} to u32. This is likely due to the literal being too large.\n{err}")]
+    CannotConvertLiteralToU32 { literal: usize, err: TryFromIntError },
     #[error("Label \".{label}\" not found. Needed at {idx}.")]
     LabelNotFound { idx: usize, label: String },
     #[error("Index {idx} of label \".{label}\" cannot be converted to word.")]

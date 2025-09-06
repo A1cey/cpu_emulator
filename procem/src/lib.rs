@@ -55,8 +55,8 @@
 //!
 //! let overflow = processor.registers.get_flag(Flag::V);
 //! ```
-//! 
-//! 
+//!
+//!
 
 #![no_std]
 
