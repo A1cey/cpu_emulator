@@ -1,7 +1,7 @@
 use thiserror::Error;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Token<'a> {
+pub(crate) enum Token<'a> {
     Label(String),
     Register(String),
     Literal(Literal<'a>),
@@ -11,7 +11,7 @@ pub enum Token<'a> {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub enum Literal<'a> {
+pub(crate) enum Literal<'a> {
     Decimal(&'a str),
     Binary(&'a str),
     Hexadecimal(&'a str),
@@ -21,7 +21,7 @@ pub enum Literal<'a> {
     Char(char),
 }
 
-pub struct Tokenizer<'a> {
+pub(crate) struct Tokenizer<'a> {
     tokens: Vec<Token<'a>>,
     curr_idx: usize,
     token_start_idx: usize,
@@ -215,7 +215,7 @@ impl Tokenizer<'_> {
                 }
                 _ => {
                     self.set_curr_idx_to_token_end();
-                    Literal::Decimal(&self.input[self.token_start_idx..=self.curr_idx])
+                    Literal::Decimal(&self.input[self.token_start_idx - 1..self.curr_idx])
                 }
             }
         } else {

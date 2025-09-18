@@ -5,7 +5,7 @@ use thiserror::Error;
 use crate::instruction::Instruction;
 use crate::word::Word;
 
-#[derive(Debug, Clone, PartialEq, Eq, Default, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Program<I, T, W>(T, PhantomData<(I, W)>);
 
 impl<T, I, W: Word> Deref for Program<I, T, W>

@@ -6,8 +6,8 @@ use procem::word::Word;
 use thiserror::Error;
 
 pub mod instruction;
-mod parser;
-mod tokenizer;
+pub mod parser;
+pub mod tokenizer;
 
 pub type AssembledProgram<W> = Program<Instruction<W>, Vec<Instruction<W>>, W>;
 

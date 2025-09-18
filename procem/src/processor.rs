@@ -109,7 +109,7 @@ where
     }
 }
 
-#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Default)]
 pub struct ProcessorBuilder<'a, const STACK_SIZE: usize, I, P, W>
 where
     I: Instruction<W>,

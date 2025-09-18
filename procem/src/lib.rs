@@ -26,8 +26,8 @@
 //! These types use two's complement representation, mirroring how real-world processor architectures work.
 //!
 //! To implement custom [`Word`](word::Word) types, you can define your own type that implements the [`Word`](word::Word) trait.
-//! 
-//! 
+//!
+//!
 //! The processor’s [`Registers`](register::Registers), [`Flags`](register::Flag) and [`Stack`](stack::Stack)
 //! are directly accessible and modifiable through the [`Processor`](processor::Processor) structure.
 //!
@@ -55,8 +55,6 @@
 //!
 //! let overflow = processor.registers.get_flag(Flag::V);
 //! ```
-//!
-//!
 
 #![no_std]
 

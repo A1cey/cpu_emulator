@@ -12,7 +12,7 @@ const GENERAL_REGISTER_COUNT: usize = 16;
 
 /// Registers struct.
 /// The register sizes correspond to the stack word size.
-#[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord)]
+#[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Default)]
 pub struct Registers<W> {
     /// general purpose registers
     general: [W; GENERAL_REGISTER_COUNT],
@@ -22,12 +22,6 @@ pub struct Registers<W> {
     pub sp: W,
     /// flags: carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z)
     flags: [bool; 4],
-}
-
-impl<W: Word> Default for Registers<W> {
-    fn default() -> Self {
-        Self::new()
-    }
 }
 
 impl<W: Word> Registers<W> {
