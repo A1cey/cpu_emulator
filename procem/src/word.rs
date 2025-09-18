@@ -1,3 +1,7 @@
+//! Procem provides a [`Word`](Word) trait.
+//! This trait wraps the underlying type used as the processor’s word size, mimicking real-world architectures
+//! (e.g., [`I32`](I32) corresponds to a 32-bit architecture).
+
 use core::fmt::{Debug, Display};
 use core::num::ParseIntError;
 use core::ops::{
@@ -5,14 +9,20 @@ use core::ops::{
     Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 
+/// The WordBase trait defines the base trait constraints for the Word type.
+/// It has a blanket implementation for all types that implement its super traits.
 pub trait WordBase: Debug + Display + Copy + Eq + Ord + Default {}
 
 impl<T> WordBase for T where T: Debug + Display + Copy + Eq + Ord + Default {}
 
+/// The WordConvert trait defines the convertion trait constraints for the Word type.
+/// It has a blanket implementation for all types that implement its super traits.
 pub trait WordConvert: TryFrom<usize> + Into<usize> + From<i32> {}
 
 impl<T> WordConvert for T where T: TryFrom<usize> + Into<usize> + From<i32> {}
 
+/// The WordOps trait defines operation trait constraints for the Word type.
+/// It has a blanket implementation for all types that implement its super traits.
 pub trait WordOps:
     Sized
     + Add<Output = Self>
@@ -44,6 +54,8 @@ impl<T> WordOps for T where
 {
 }
 
+/// The WordBitOps trait defines bitwise operation trait constraints for the Word type.
+/// It has a blanket implementation for all types that implement its super traits.
 pub trait WordBitOps:
     Sized
     + BitAnd<Self, Output = Self>
@@ -75,7 +87,8 @@ impl<T> WordBitOps for T where
 {
 }
 
-/// Marker trait for types that can be used as words in a stack.
+/// The Word trait wraps the underlying type used as the processor’s word size, mimicking real-world architectures
+/// (e.g., [`I32`] corresponds to a 32-bit architecture).
 pub trait Word: WordBase + WordConvert + WordOps + WordBitOps {
     /// This is a wrapper around the [`from_str_radix()`](i32::from_str_radix()) function that is implemented for all of Rust's numeric types.
     ///
@@ -83,7 +96,7 @@ pub trait Word: WordBase + WordConvert + WordOps + WordBitOps {
     /// Returns [`ParseIntError`] when the parsing failed.
     fn from_str_radix(s: &str, radix: u32) -> Result<Self, ParseIntError>;
 
-    /// Checks for carry when adding.#
+    /// Checks for carry when adding.
     #[must_use]
     fn check_carry_add(&self, rhs: Self) -> bool;
 
@@ -122,7 +135,7 @@ pub trait Word: WordBase + WordConvert + WordOps + WordBitOps {
     fn rotate_right(&self, val: u32) -> Self;
 }
 
-// This macro is used to implement the From<i32> trait for Word.
+// Implements the From<i32> trait for a wrapper struct around another type like i8.
 // It is necessary as Word is implemented for all signed types also i32.
 // From<i32> cannot be implemented for i32 and therefore this extra macro is needed.
 macro_rules! from_i32 {
@@ -138,9 +151,13 @@ macro_rules! from_i32 {
     };
 }
 
-// This macro can be used to implement the Word trait for a wrapper struct around another type like i8.
+
+
+// Implements the Word trait for a wrapper struct around another type like i8.
 macro_rules! impl_word {
     ($name: ident, $type: ty $(,)? ) => {
+        #[doc = concat!("Wrapper struct around ", stringify!($type), ".")]
+        #[doc = concat!("Represents a ", stringify!($type), "-bit processor architecture.")]
         #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
         #[repr(transparent)]
         pub struct $name($type);

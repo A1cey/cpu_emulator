@@ -7,11 +7,7 @@
 //! The instruction set in use must implement the [`Instruction`](instruction::Instruction) trait.
 //! A default instruction set is available in the [`procem_default`](../procem_default/index.html) crate.
 //!
-//! # The [`Word`](word::Word) trait
-//!
-//! Procem provides a [`Word`](word::Word) trait.
-//! This trait wraps the underlying type used as the processor’s word size, mimicking real-world architectures
-//! (e.g., [`I32`](word::I32) corresponds to a 32-bit architecture).
+
 //!
 //! The [`Registers`](register::Registers) and [`Stack`](stack::Stack) use [`Word`](word::Word) as their data type.
 //!
