@@ -1,18 +1,4 @@
-//! The [`Processor`] is the main component of the emulator. It represents a simplified real world processor with a stack, registers and flags.
-//!
-//! It can store a singular program.
-//! It has 16 general use registers, a program counter (pc), a stack pointer (sp) and 4 flags (carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z)).
-//! It also has a stack of size `STACK_SIZE`.
-//!
-//! The processor can be created by using the [`builder()`](Processor::builder()) method or by using the [`new()`](Processor::new()) method.
-//! Using the builder pattern allows specifying the initial registers, stack and program.
-//! Any unspecifed values will be initialized to their default values.
-//! Using the [`new()`](Processor::new()) method just creates a default processor.
-//! The program is then loaded using the [`load_program()`](Processor::load_program()) method.
-//!
-//! To run a loaded program two methods are provided:
-//! - To run the entire program use [`run_program()`](Processor::run_program()).
-//! - To run only the next instruction use [`execute_next_instruction()`](Processor::execute_next_instruction()).
+//! The [`Processor`] and [`ProcessorBuilder`] structs.
 use core::fmt::{Display, Formatter};
 use core::ops::Deref;
 
@@ -22,6 +8,23 @@ use crate::register::{Register, Registers};
 use crate::stack::Stack;
 use crate::word::Word;
 
+/// The [`Processor`] is the main component of the emulator. It represents a simplified real world processor with a stack, registers and flags.
+///
+/// It can store a singular [`Program`].
+/// It has [`GENERAL_REGISTER_COUNT`](crate::register::GENERAL_REGISTER_COUNT) general purpose [`register`](crate::register)s, 
+/// a program counter ([`pc`](crate::register::Registers::pc)), a stack pointer ([`sp`](crate::register::Registers::sp)) 
+/// and 4 flags ([`C`](crate::register::Flag::C), [`S`](crate::register::Flag::S), [`V`](crate::register::Flag::V), [`Z`](crate::register::Flag::Z)).
+/// It also has a stack of size `STACK_SIZE`.
+///
+/// The processor can be created by using the [`builder()`](Processor::builder()) method or the [`ProcessorBuilder`] directly or by using the [`new()`](Processor::new()) method.
+/// Using the builder pattern allows specifying the initial registers, stack and program.
+/// Any unspecifed values will be initialized to their default values.
+/// Using the [`new()`](Processor::new()) method just creates a default processor.
+/// The program is then loaded using the [`load_program()`](Processor::load_program()) method.
+///
+/// To run a loaded program two methods are provided:
+/// - To run the entire program use [`run_program()`](Processor::run_program()).
+/// - To run only the next instruction use [`execute_next_instruction()`](Processor::execute_next_instruction()).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Processor<'a, const STACK_SIZE: usize, I, P, W>
 where
@@ -109,6 +112,7 @@ where
     }
 }
 
+/// The [`ProcessorBuilder`] is used to create a [`Processor`].
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Default)]
 pub struct ProcessorBuilder<'a, const STACK_SIZE: usize, I, P, W>
 where

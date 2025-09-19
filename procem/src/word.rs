@@ -1,6 +1,4 @@
-//! Procem provides a [`Word`](Word) trait.
-//! This trait wraps the underlying type used as the processor’s word size, mimicking real-world architectures
-//! (e.g., [`I32`](I32) corresponds to a 32-bit architecture).
+//! The [`Word`] trait, its super traits and its implementations for all signed integer types.
 
 use core::fmt::{Debug, Display};
 use core::num::ParseIntError;
@@ -89,6 +87,16 @@ impl<T> WordBitOps for T where
 
 /// The Word trait wraps the underlying type used as the processor’s word size, mimicking real-world architectures
 /// (e.g., [`I32`] corresponds to a 32-bit architecture).
+///
+/// The [`Word`] trait is implemented for the following signed integer types:
+/// - [`I8`]
+/// - [`I16`]
+/// - [`I32`]
+/// - [`I64`]
+/// - [`I128`]
+/// - [`ISize`]
+/// These types use two's complement representation, mirroring how real-world processor architectures work.
+/// To implement custom [`Word`] types, you can define your own type that implements the [`Word`] trait.
 pub trait Word: WordBase + WordConvert + WordOps + WordBitOps {
     /// This is a wrapper around the [`from_str_radix()`](i32::from_str_radix()) function that is implemented for all of Rust's numeric types.
     ///
@@ -150,8 +158,6 @@ macro_rules! from_i32 {
         }
     };
 }
-
-
 
 // Implements the Word trait for a wrapper struct around another type like i8.
 macro_rules! impl_word {

@@ -1,3 +1,4 @@
+//! The [`Registers`] struct, [`Register`] enum and [`Flag`] enum.
 use core::fmt::Debug;
 use core::str::FromStr;
 use thiserror::Error;
@@ -8,19 +9,21 @@ use crate::word::Word;
 #[cfg(feature = "alloc")]
 use alloc::string::{String, ToString};
 
-const GENERAL_REGISTER_COUNT: usize = 16;
+pub const GENERAL_REGISTER_COUNT: usize = 16;
 
-/// Registers struct.
+/// The Registers struct provides [`GENERAL_REGISTER_COUNT`] general purpose registers, 
+/// the program counter ([`pc`](Registers::pc)), the stack pointer ([`sp`](Registers::sp)) 
+/// and 4 flags ([`C`](Flag::C), [`S`](Flag::S), [`V`](Flag::V), [`Z`](Flag::Z)).
 /// The register sizes correspond to the stack word size.
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Default)]
 pub struct Registers<W> {
-    /// general purpose registers
+    // General purpose registers.
     general: [W; GENERAL_REGISTER_COUNT],
-    /// program counter
+    /// Program counter register.
     pub pc: W,
-    /// stack pointer
+    /// Stack pointer register.
     pub sp: W,
-    /// flags: carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z)
+    // Flags: carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z).
     flags: [bool; 4],
 }
 
@@ -107,7 +110,7 @@ impl<W: Word> core::fmt::Display for Registers<W> {
     }
 }
 
-/// Enum of all register names
+/// Register enum.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Hash, PartialOrd, Ord)]
 pub enum Register {
     R0,
@@ -164,7 +167,7 @@ impl FromStr for Register {
     }
 }
 
-/// Flag registers
+/// Flag enum.
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy, Hash)]
 pub enum Flag {
     /// Carry flag. Normally set when an addition results in a carry or a subtraction results in a borrow.

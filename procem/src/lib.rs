@@ -7,22 +7,7 @@
 //! The instruction set in use must implement the [`Instruction`](instruction::Instruction) trait.
 //! A default instruction set is available in the [`procem_default`](../procem_default/index.html) crate.
 //!
-
-//!
 //! The [`Registers`](register::Registers) and [`Stack`](stack::Stack) use [`Word`](word::Word) as their data type.
-//!
-//! The following signed integer types implement the [`Word`](word::Word) trait:
-//! - [`I8`](word::I8)
-//! - [`I16`](word::I16)
-//! - [`I32`](word::I32)
-//! - [`I64`](word::I64)
-//! - [`I128`](word::I128)
-//! - [`ISize`](word::ISize)
-//!
-//! These types use two's complement representation, mirroring how real-world processor architectures work.
-//!
-//! To implement custom [`Word`](word::Word) types, you can define your own type that implements the [`Word`](word::Word) trait.
-//!
 //!
 //! The processor’s [`Registers`](register::Registers), [`Flags`](register::Flag) and [`Stack`](stack::Stack)
 //! are directly accessible and modifiable through the [`Processor`](processor::Processor) structure.

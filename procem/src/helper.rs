@@ -3,6 +3,15 @@ use core::{
     ops::Deref,
 };
 
+/// A helper struct for formatting arrays.
+///
+/// # Example:
+/// ```ignore
+/// let array = [1, 2, 3];
+/// let formatted = FmtArray(&array);
+/// assert_eq!(formatted.to_string(), "[1, 2, 3]");
+/// assert_eq!(format!("{}", formatted), "[1, 2, 3]");
+/// ```
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub struct FmtArray<'a, T>(pub &'a [T]);
 
@@ -28,5 +37,26 @@ impl<T: Display> Display for FmtArray<'_, T> {
         }
 
         write!(f, "]")
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use alloc::format;
+    use alloc::string::ToString;
+
+    #[test]
+    fn test_fmt_array_with_to_string() {
+        let array = [1, 2, 3];
+        let formatted = FmtArray(&array);
+        assert_eq!(formatted.to_string(), "[1, 2, 3]");
+    }
+
+    #[test]
+    fn test_fmt_array_with_format_macro() {
+        let array = [1, 2, 3];
+        let formatted = FmtArray(&array);
+        assert_eq!(format!("{}", formatted), "[1, 2, 3]");
     }
 }

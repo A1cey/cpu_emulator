@@ -1,3 +1,4 @@
+//! The [`Program`] struct.
 use core::marker::PhantomData;
 use core::ops::Deref;
 use thiserror::Error;
@@ -5,6 +6,9 @@ use thiserror::Error;
 use crate::instruction::Instruction;
 use crate::word::Word;
 
+/// [`Program`] is a container for a sequence of instructions that is executed by the [`Processor`](crate::processor::Processor).
+/// 
+/// An instruction can be fetched from the program using the [`fetch_instruction`](Program::fetch_instruction) method.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
 pub struct Program<I, T, W>(T, PhantomData<(I, W)>);
 
