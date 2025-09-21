@@ -9,7 +9,3 @@ thiserror = { workspace = true }
 
 [lib]
 name = "procem_default"
-
-[[bin]]
-name = "procem-asm"
-path = "src/main.rs"
