@@ -35,6 +35,10 @@
 //! processor.registers.set_reg(Register::R1, r0);
 //!
 //! let overflow = processor.registers.get_flag(Flag::V);
+//! 
+//! processor.stack.write(processor.registers.get_reg(Register::SP), 10.into());
+//! let val = processor.stack.read(processor.registers.get_reg(Register::SP));
+//! assert_eq!(val, 10.into());
 //! ```
 
 #![no_std]
