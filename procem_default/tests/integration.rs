@@ -50,10 +50,10 @@ fn simple_5x2_multiplication() {
     }
 
     assert_eq!(processor.registers.get_reg(Register::R1), 10.into());
-    assert_eq!(processor.registers.pc, 2.into());
+    assert_eq!(processor.registers.pc(), 2.into());
 
     assert!(processor.execute_next_instruction().is_ok());
-    assert_eq!(processor.registers.pc, 0.into());
+    assert_eq!(processor.registers.pc(), 0.into());
 }
 
 #[test]

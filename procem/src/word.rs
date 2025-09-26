@@ -7,19 +7,19 @@ use core::ops::{
     Neg, Not, Rem, RemAssign, Shl, ShlAssign, Shr, ShrAssign, Sub, SubAssign,
 };
 
-/// The WordBase trait defines the base trait constraints for the Word type.
+/// The `WordBase` trait defines the base trait constraints for the Word type.
 /// It has a blanket implementation for all types that implement its super traits.
 pub trait WordBase: Debug + Display + Copy + Eq + Ord + Default {}
 
 impl<T> WordBase for T where T: Debug + Display + Copy + Eq + Ord + Default {}
 
-/// The WordConvert trait defines the convertion trait constraints for the Word type.
+/// The `WordConvert` trait defines the convertion trait constraints for the Word type.
 /// It has a blanket implementation for all types that implement its super traits.
 pub trait WordConvert: TryFrom<usize> + Into<usize> + From<i32> {}
 
 impl<T> WordConvert for T where T: TryFrom<usize> + Into<usize> + From<i32> {}
 
-/// The WordOps trait defines operation trait constraints for the Word type.
+/// The `WordOps` trait defines operation trait constraints for the Word type.
 /// It has a blanket implementation for all types that implement its super traits.
 pub trait WordOps:
     Sized
@@ -52,7 +52,7 @@ impl<T> WordOps for T where
 {
 }
 
-/// The WordBitOps trait defines bitwise operation trait constraints for the Word type.
+/// The `WordBitOps` trait defines bitwise operation trait constraints for the Word type.
 /// It has a blanket implementation for all types that implement its super traits.
 pub trait WordBitOps:
     Sized
@@ -95,6 +95,7 @@ impl<T> WordBitOps for T where
 /// - [`I64`]
 /// - [`I128`]
 /// - [`ISize`]
+/// 
 /// These types use two's complement representation, mirroring how real-world processor architectures work.
 /// To implement custom [`Word`] types, you can define your own type that implements the [`Word`] trait.
 pub trait Word: WordBase + WordConvert + WordOps + WordBitOps {

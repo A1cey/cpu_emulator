@@ -246,7 +246,7 @@ impl<W: Word> Instruction<W> {
         processor: &mut Processor<STACK_SIZE, Self, P, W>,
     ) {
         processor.registers.inc(Register::SP);
-        let sp = processor.registers.sp;
+        let sp = processor.registers.sp();
 
         processor.stack.write(sp, from.resolve(processor));
     }
@@ -257,7 +257,7 @@ impl<W: Word> Instruction<W> {
         to: Register,
         processor: &mut Processor<STACK_SIZE, Self, P, W>,
     ) {
-        let sp = processor.registers.sp;
+        let sp = processor.registers.sp();
         let val = processor.stack.read(sp);
 
         processor.registers.dec(Register::SP);
@@ -271,7 +271,7 @@ impl<W: Word> Instruction<W> {
         addr: Operand<W>,
         processor: &mut Processor<STACK_SIZE, Self, P, W>,
     ) {
-        Self::push(Operand::Value(processor.registers.pc), processor);
+        Self::push(Operand::Value(processor.registers.pc()), processor);
         processor.registers.set_reg(Register::PC, addr.resolve(processor));
     }
 

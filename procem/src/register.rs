@@ -11,18 +11,29 @@ use alloc::string::{String, ToString};
 
 pub const GENERAL_REGISTER_COUNT: usize = 16;
 
-/// The Registers struct provides [`GENERAL_REGISTER_COUNT`] general purpose registers, 
-/// the program counter ([`pc`](Registers::pc)), the stack pointer ([`sp`](Registers::sp)) 
-/// and 4 flags ([`C`](Flag::C), [`S`](Flag::S), [`V`](Flag::V), [`Z`](Flag::Z)).
+/// The `Registers` struct provides general purpose registers,
+/// a program counter, a stack pointer and flags.
+///
+/// There are [`GENERAL_REGISTER_COUNT`] general purpose registers (R1 - Rn).
+/// They can be accessed with the [`get_reg`](Registers::get_reg) and [`set_reg`](Registers::set_reg) methods by providing the corresponding [`Register`] value.
+///
+/// The program counter (pc) can be read with the [`pc`](Registers::pc) method and the stack pointer (sp) can be read with the [`sp`](Registers::sp) method.
+/// Both of these registers can also be accessed with the [`get_reg`](Registers::get_reg) and [`set_reg`](Registers::set_reg) methods.
+
 /// The register sizes correspond to the stack word size.
+///
+/// The flags are carry flag ([`C`](Flag::C)), signed flag ([`S`](Flag::S)), overflow flag ([`V`](Flag::V)) and zero condition flag ([`Z`](Flag::Z)).
+/// They can be accessed with the [`get_flag`](Registers::get_flag) and [`set_flag`](Registers::set_flag) methods by providing the corresponding [`Flag`] value.
+///
+/// There are two convenience methods for incrementing and decrementing registers: [`inc`](Registers::inc) and [`dec`](Registers::dec).
 #[derive(Debug, PartialEq, Eq, Clone, Hash, PartialOrd, Ord, Default)]
 pub struct Registers<W> {
     // General purpose registers.
     general: [W; GENERAL_REGISTER_COUNT],
-    /// Program counter register.
-    pub pc: W,
-    /// Stack pointer register.
-    pub sp: W,
+    // Program counter register.
+    pc: W,
+    // Stack pointer register.
+    sp: W,
     // Flags: carry flag (C), signed flag (S), overflow flag (V), zero condition flag (Z).
     flags: [bool; 4],
 }
@@ -47,6 +58,18 @@ impl<W: Word> Registers<W> {
             Register::SP => self.sp,
             _ => self.general[reg as usize],
         }
+    }
+
+    /// Get the value of the program counter register.
+    #[inline]
+    pub const fn pc(&self) -> W {
+        self.pc
+    }
+
+    /// Get the value of the stack pointer register.
+    #[inline]
+    pub const fn sp(&self) -> W {
+        self.sp
     }
 
     /// Set the value of a register.

@@ -6,6 +6,7 @@ use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Deref, DerefMut};
 
 /// The [`Stack`] is a wrapper around a fixed-size array of values implementing the [`Word`] trait.
+/// 
 /// It can be read with the [`read`](Stack::read) method. It can also be written to with the [`write`](Stack::write) method.
 /// For both reading and writing, the stack pointer needs to be provided.
 /// ```
