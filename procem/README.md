@@ -19,7 +19,7 @@ You can implement your own instruction set by implementing the `Instruction` tra
 
 ```rust
 use procem::{processor::Processor, register::Register, word::I32};
-use procem_default::{assemble, instruction::Instruction};
+use procem_default::assemble;
 
 // Assemble a program from asm
 let program = assemble::<I32>(

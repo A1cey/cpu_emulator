@@ -70,7 +70,7 @@ pub enum Instruction<W: Word> {
     Inc { reg: Register, signed: bool },
     /// Decrement the value in a register by one. (DEC\[S\])
     Dec { reg: Register, signed: bool },
-    /// Set program pointer to a value, effectively jumping to the instruction at this point in the program.
+    /// Set program counter to a value, effectively jumping to the instruction at this point in the program.
     /// The condition is checked before jumping and the jump is performed if the condition is met.
     /// See the assembly instruction at `JumpCondition`.
     Jump { to: W, condition: JumpCondition },
