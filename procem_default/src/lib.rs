@@ -1,4 +1,4 @@
-//! **procem_default** is a toy Rust library that provides a default implementation of the [`Instruction`](../procem/instruction/trait.Instruction.html) trait of the [`procem`](../procem/index.html) library.
+//! **`procem_default`** is a toy Rust library that provides a default implementation of the [`Instruction`](../procem/instruction/trait.Instruction.html) trait of the [`procem`](../procem/index.html) library.
 //!
 //! # Instruction set
 //!
