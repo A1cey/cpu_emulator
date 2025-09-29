@@ -1,4 +1,4 @@
-//! Procem provides a [`Processor`](processor::Processor) structure, which emulates a real-world processor architecture.
+//! **procem** provides a [`Processor`](processor::Processor) structure, which emulates a real-world processor architecture.
 //!
 //! The design is loosely based on the ARM architecture.
 //!

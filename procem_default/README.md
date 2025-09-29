@@ -58,7 +58,10 @@ All operations that can be suffixed with an 'S', set the flag registers dependin
 - **ROL \<REG>, \<LIT>**: Rotate the value in the register left by the specified number of bits. Only use values between 1 and the number of bits of the Word size minus 1.
 - **ROR \<REG>, \<LIT>**: Rotate the value in the register right by the specified number of bits. Only use values between 1 and the number of bits of the Word size minus 1.
 
-### Example: Using procem_default
+### Usage
+To assemble a program from assembly code use the **assemble** function.
+
+### Example
 
 ```rust
 use procem::{processor::Processor, register::Register, word::I32};
