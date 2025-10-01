@@ -32,6 +32,7 @@ pub enum JumpCondition {
 }
 
 impl JumpCondition {
+    /// Check the jump condition.
     #[inline]
     pub(crate) const fn check<const STACK_SIZE: usize, W, P>(
         self,

@@ -6,12 +6,13 @@ use crate::instruction::Instruction;
 
 /// Operand for the instruction set.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
-pub enum Operand<W: Word> {
+pub enum Operand<W> {
     Register(Register),
     Value(W),
 }
 
 impl<W: Word> Operand<W> {
+    /// Resolve the operand to a value.
     #[inline]
     pub(crate) const fn resolve<const STACK_SIZE: usize, P>(
         self,

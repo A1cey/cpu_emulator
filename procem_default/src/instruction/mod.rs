@@ -23,7 +23,7 @@ use crate::instruction::{
 
 /// A default instruction set implementation, that can be used for the [procem](../../procem/index.html) crate.
 #[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd, Ord, Hash)]
-pub enum Instruction<W: Word> {
+pub enum Instruction<W> {
     /// No operation. (NOP)
     Nop,
     /// Copy a value from the operand to the register. (MOV)

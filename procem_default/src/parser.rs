@@ -16,7 +16,7 @@ use crate::instruction::{Instruction, asm_instruction::ASMNoArgInstruction};
 use crate::tokenizer::{Literal, Token};
 
 #[derive(Debug, Default, Clone, PartialEq, Eq)]
-pub(crate) struct Parser<'a, W: Word> {
+pub(crate) struct Parser<'a, W> {
     tokens: &'a [Token<'a>],
     instructions: Vec<Instruction<W>>,
     errors: Option<Vec<ParserError>>,
