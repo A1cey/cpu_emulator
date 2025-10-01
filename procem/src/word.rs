@@ -95,7 +95,7 @@ impl<T> WordBitOps for T where
 /// - [`I64`]
 /// - [`I128`]
 /// - [`ISize`]
-/// 
+///
 /// These types use two's complement representation, mirroring how real-world processor architectures work.
 /// To implement custom [`Word`] types, you can define your own type that implements the [`Word`] trait.
 pub trait Word: WordBase + WordConvert + WordOps + WordBitOps {

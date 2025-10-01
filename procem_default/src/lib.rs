@@ -110,7 +110,7 @@ pub type AssembledProgram<W> = Program<Instruction<W>, Vec<Instruction<W>>, W>;
 /// ```
 /// use procem::{program::Program, register::Register, word::I32};
 /// use procem_default::{assemble, instruction::{Instruction, jump_condition::JumpCondition, operand::Operand} };
-/// 
+///
 /// const STACK_SIZE: usize = 1024;
 ///
 /// let program = assemble::<I32>(

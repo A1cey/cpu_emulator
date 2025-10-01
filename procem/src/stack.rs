@@ -6,7 +6,7 @@ use core::fmt::{Debug, Display, Formatter};
 use core::ops::{Deref, DerefMut};
 
 /// The [`Stack`] is a wrapper around a fixed-size array of values implementing the [`Word`] trait.
-/// 
+///
 /// It can be read with the [`read`](Stack::read) method. It can also be written to with the [`write`](Stack::write) method.
 /// For both reading and writing, the stack pointer needs to be provided.
 /// ```
@@ -29,17 +29,17 @@ use core::ops::{Deref, DerefMut};
 /// # let mut processor = Processor::<4, _,  Vec<Inst<I64>>,_>::new();
 /// // Default stack values are all zero.
 /// assert_eq!(processor.stack.read(processor.registers.get_reg(Register::SP)), 0.into());
-/// 
+///
 /// processor.stack.write(processor.registers.get_reg(Register::SP), 1.into());
 /// assert_eq!(processor.stack.read(processor.registers.get_reg(Register::SP)), 1.into());
-/// 
+///
 /// processor.registers.inc(Register::SP);
 /// processor.stack.write(processor.registers.get_reg(Register::SP), 10.into());
 /// assert_eq!(processor.stack.read(processor.registers.get_reg(Register::SP)), 10.into());
 /// ```
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash)]
 #[repr(transparent)]
-pub struct Stack<const STACK_SIZE: usize, W: Word>([W; STACK_SIZE]);
+pub struct Stack<const STACK_SIZE: usize, W>([W; STACK_SIZE]);
 
 impl<const STACK_SIZE: usize, W: Word> Deref for Stack<STACK_SIZE, W> {
     type Target = [W; STACK_SIZE];

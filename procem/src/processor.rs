@@ -11,8 +11,8 @@ use crate::word::Word;
 /// The [`Processor`] is the main component of the emulator. It represents a simplified real world processor with a stack, registers and flags.
 ///
 /// It can store a singular [`Program`].
-/// It has [`GENERAL_REGISTER_COUNT`](crate::register::GENERAL_REGISTER_COUNT) general purpose [`register`](crate::register)s, 
-/// a program counter ([`pc`](crate::register::Registers::pc)), a stack pointer ([`sp`](crate::register::Registers::sp)) 
+/// It has [`GENERAL_REGISTER_COUNT`](crate::register::GENERAL_REGISTER_COUNT) general purpose [`register`](crate::register)s,
+/// a program counter ([`pc`](crate::register::Registers::pc)), a stack pointer ([`sp`](crate::register::Registers::sp))
 /// and 4 flags ([`C`](crate::register::Flag::C), [`S`](crate::register::Flag::S), [`V`](crate::register::Flag::V), [`Z`](crate::register::Flag::Z)).
 /// It also has a stack of size `STACK_SIZE`.
 ///
@@ -26,12 +26,7 @@ use crate::word::Word;
 /// - To run the entire program use [`run_program()`](Processor::run_program()).
 /// - To run only the next instruction use [`execute_next_instruction()`](Processor::execute_next_instruction()).
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Hash, Default)]
-pub struct Processor<'a, const STACK_SIZE: usize, I, P, W>
-where
-    I: Instruction<W>,
-    P: Deref<Target = [I]>,
-    W: Word,
-{
+pub struct Processor<'a, const STACK_SIZE: usize, I, P, W: Word> {
     pub registers: Registers<W>,
     pub stack: Stack<STACK_SIZE, W>,
     program: Option<&'a Program<I, P, W>>,
@@ -114,12 +109,7 @@ where
 
 /// The [`ProcessorBuilder`] is used to create a [`Processor`].
 #[derive(Debug, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Default)]
-pub struct ProcessorBuilder<'a, const STACK_SIZE: usize, I, P, W>
-where
-    I: Instruction<W>,
-    P: Deref<Target = [I]>,
-    W: Word,
-{
+pub struct ProcessorBuilder<'a, const STACK_SIZE: usize, I, P, W> {
     registers: Option<Registers<W>>,
     stack: Option<Stack<STACK_SIZE, W>>,
     program: Option<&'a Program<I, P, W>>,
