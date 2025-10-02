@@ -2,6 +2,10 @@
 name = "procem"
 version = "0.1.0"
 edition = "2024"
+repository = "https://github.com/A1cey/procem/tree/main/procem"
+license = "MIT"
+description = "A simple library for processor emulation"
+keywords = ["processor", "emulation", "simulation", "cpu"]
 
 [features]
 default = []

@@ -2,9 +2,13 @@
 name = "procem_default"
 version = "0.1.0"
 edition = "2024"
+repository = "https://github.com/A1cey/procem/tree/main/procem_default"
+license = "MIT"
+description = "A default implementation of an instruction set for the procem library"
+keywords = ["processor", "emulation", "simulation", "cpu", "procem"]
 
 [dependencies]
-procem = { path = "../procem", features = ["alloc"] }
+procem = { path = "../procem", features = ["alloc"], version = "0.1.0" }
 thiserror = { workspace = true }
 
 [lib]
