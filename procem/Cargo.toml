@@ -5,7 +5,7 @@ edition = "2024"
 repository = "https://github.com/A1cey/procem/tree/main/procem"
 license = "MIT"
 description = "A simple library for processor emulation"
-keywords = ["processor", "emulation", "simulation", "cpu"]
+keywords = ["processor", "emulator", "simulator", "cpu"]
 
 [features]
 default = []
